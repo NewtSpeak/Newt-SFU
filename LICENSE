@@ -1,0 +1,61 @@
+Owl-SFU Dual License
+========================
+
+Copyright (c) 2026 OwlSpeak and contributors
+
+本软件采用「双重许可」（Dual Licensing）。使用本软件即表示您已阅读并同意适用许可条款。
+
+--------------------------------------------------------------------------------
+一、许可总则（简体中文摘要，法律效力以英文正文与对应完整文本为准）
+--------------------------------------------------------------------------------
+
+1. 非商业 / 个人用途（免费）
+   - 允许：个人学习、研究、实验、爱好项目、非营利科研与教育等非商业用途。
+   - 强制开源：若您修改本软件并对外分发、公开发布或通过网络向他人提供服务，
+     您必须以相同非商业许可公开完整对应源代码，并保留版权与许可声明。
+   - 完整条款见：LICENSE-NONCOMMERCIAL.md
+     （基于 PolyForm Noncommercial License 1.0.0，并附加「强制开源 / Share-Alike」义务）
+
+2. 商业用途（不允许免费商用）
+   - 禁止在未获得商业许可的情况下将本软件用于任何商业目的，包括但不限于：
+     公司/组织内部生产环境使用、对外收费或引流服务、嵌入商业产品、
+     托管 / SaaS / 运维服务、代运维、二次销售或商业咨询交付物等。
+   - 商业使用必须另行购买商业许可。
+   - 完整说明见：LICENSE-COMMERCIAL.md
+
+3. 贡献
+   - 除非另有书面约定，向本仓库提交代码即表示您同意以本双重许可授权给项目维护者，
+     并可被再许可（包括商业再许可）。
+
+如摘要与完整许可文本冲突，以完整许可文本为准。
+
+--------------------------------------------------------------------------------
+II. Dual License Summary (English)
+--------------------------------------------------------------------------------
+
+This software is dual-licensed.
+
+1) Noncommercial / Personal Use (Free)
+   - Permitted for personal, research, educational, hobby, and other noncommercial purposes.
+   - Copyleft / Forced Open Source: if you modify and distribute the software, or offer it
+     to others over a network, you must publish the complete corresponding source code
+     under the same noncommercial terms and retain copyright/license notices.
+   - Full terms: LICENSE-NONCOMMERCIAL.md
+     (PolyForm Noncommercial License 1.0.0 + additional Share-Alike / source-disclosure obligations)
+
+2) Commercial Use (Not free)
+   - Commercial use is NOT permitted under the free license.
+   - You must obtain a separate paid commercial license before any commercial use.
+   - Full terms: LICENSE-COMMERCIAL.md
+
+3) Contributions
+   - Unless otherwise agreed in writing, contributions are licensed to the maintainers
+     under these dual-license terms and may be relicensed (including commercially).
+
+If this summary conflicts with the full license texts, the full texts control.
+
+Required Notice: Copyright (c) 2026 OwlSpeak and contributors
+Repository: https://github.com/OwlSpeak/Owl-SFU
+
+SPDX-License-Identifier: LicenseRef-Owl-SFU-Dual
+Noncommercial base: PolyForm-Noncommercial-1.0.0

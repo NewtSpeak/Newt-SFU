@@ -1,0 +1,49 @@
+# Owl-SFU 配置示例（复制为 config.yaml；全部字段可用 OWLSFU_ 前缀环境变量覆盖，
+# 如 OWLSFU_NODE_ID / OWLSFU_NO_TLS）
+
+# 节点身份：Server 预创建占位的 node_id + 一次性 enroll token（仅首次接入需要）
+node_id: "sfu-node-1"
+enroll_token: ""
+
+# Owl-Server gRPC 地址（Enroll 用；控制通道优先用 Enroll 下发的 control_endpoint）
+server_enroll_endpoint: "127.0.0.1:9443"
+# dev 专用：Enroll 首次连接跳过 TLS 校验；拿到 ca_bundle 后控制通道始终严格校验
+enroll_insecure: false
+
+# 节点私钥/证书/CA/控制面地址/media token 公钥落盘目录
+data_dir: "./data"
+
+# 客户端信令监听（/ws /rtt /healthz /metrics /debug/pprof 同端口）
+wss_listen: ":8443"
+# dev/bot 联调：true 时用纯 HTTP/WS 不上 TLS
+no_tls: false
+# 生产 WSS 用浏览器可信证书（ACME）
+tls_cert_file: ""
+tls_key_file: ""
+
+# 全部 WebRTC 媒体走单端口 UDPMux
+media_udp_port: 3478
+# NAT 后部署时填公网 IP（NAT1To1 host candidate）；留空用本机地址
+public_ip: ""
+
+# 下发给客户端的信令地址（经控制通道上报 Server）
+advertise_wss_url: "ws://127.0.0.1:8443/ws"
+
+# 本地防御硬顶：超过即拒绝新会话
+max_users: 1200
+
+# 级联（M3）：节点间 mTLS 信令监听（docs 15 BH：默认 tcp/8843）
+cascade_listen: ":8843"
+# 上报给 Server 的级联端点 host:port（Server 下发 CascadeEdge 时使用）；
+# 留空回落 public_ip + cascade_listen 端口
+advertise_cascade_endpoint: ""
+
+# 热迁移（M4）：SIGTERM 后等待 Server 迁空会话的时限（秒；09 I.6 定稿 60s，超时硬关）
+drain_timeout_sec: 60
+
+# 音频审计（adminpresence 专项）：token 带 audit claim 的会话（被审计频道）录制上行音频，
+# 落 data_dir/audit 后上传主节点服务器（POST audit_ingest_url，Bearer audit_ingest_token，
+# 与 Owl-Server 的 AUDIT_INGEST_TOKEN 对齐）。留空 URL/token 则仅落本地盘不上传。
+audit_ingest_url: ""       # 如 https://chat.example.com/audit-api/records
+audit_ingest_token: ""     # 与 Owl-Server AUDIT_INGEST_TOKEN 相同的共享密钥
+audit_keep_local: false    # 上传成功后是否保留本地录音（默认删除节省磁盘）
