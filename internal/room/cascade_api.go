@@ -174,7 +174,7 @@ func (r *Room) ensureRemoteDownTrack(rp *RemotePublisher, sub *Participant) {
 	if rp.closed.Load() || sub.closed.Load() {
 		return
 	}
-	if !rp.remoteShouldForward(sub, sub.isUnsubscribed(rp.uid)) {
+	if !rp.remoteShouldForward(sub, sub.isUnsubscribed(rp.uid, rp.kind)) {
 		return
 	}
 	key := rp.trackKey()
@@ -191,7 +191,7 @@ func (r *Room) ensureRemoteDownTrack(rp *RemotePublisher, sub *Participant) {
 		// 同 key 既有下行轨（同名远端轨重挂：剪枝恢复/边重建/renegotiation）：
 		// 新注册直接接管，零协商恢复转发（轨保留语义，见 RemotePublisher.Close）。
 		dt.owner = rp
-		dt.active = !sub.hasUnsubscribedLocked(rp.uid)
+		dt.active = !sub.hasUnsubscribedLocked(rp.uid, rp.kind)
 		sub.mu.Unlock()
 		return
 	}
@@ -216,7 +216,7 @@ func (r *Room) ensureRemoteDownTrack(rp *RemotePublisher, sub *Participant) {
 
 	sub.mu.Lock()
 	dt := &downTrack{pubUID: rp.uid, track: local, sender: sender,
-		active: !sub.hasUnsubscribedLocked(rp.uid), owner: rp}
+		active: !sub.hasUnsubscribedLocked(rp.uid, rp.kind), owner: rp}
 	if rp.kind == KindAudio {
 		sub.downTracks[key] = dt
 	} else {
@@ -246,10 +246,13 @@ func forwardRemoteScreenRTCP(sender *webrtc.RTPSender, rp *RemotePublisher) {
 	}
 }
 
-// hasUnsubscribedLocked 需在 sub.mu 已持有时调用。
-func (p *Participant) hasUnsubscribedLocked(pubUID string) bool {
-	_, ok := p.unsubscribed[pubUID]
-	return ok
+// hasUnsubscribedLocked 按轨 kind 查退订标记；需在 sub.mu 已持有时调用。
+func (p *Participant) hasUnsubscribedLocked(pubUID, kind string) bool {
+	u := p.unsubscribed[pubUID]
+	if kindIsVideo(kind) {
+		return u.video
+	}
+	return u.audio
 }
 
 // rebuildRemoteFanout 重建远端轨的下行轨快照。
@@ -270,7 +273,7 @@ func (r *Room) rebuildRemoteFanout(rp *RemotePublisher) {
 		}
 		dt := tracks[key]
 		active := dt != nil && dt.owner == rp && dt.active
-		unsub := sub.hasUnsubscribedLocked(rp.uid)
+		unsub := sub.hasUnsubscribedLocked(rp.uid, rp.kind)
 		sub.mu.Unlock()
 		if active && rp.remoteShouldForward(sub, unsub) {
 			list = append(list, dt)
@@ -356,18 +359,18 @@ func (r *Room) rebuildCascadeFanout(p *Participant, kind string) {
 //   - want=true：需要「除 except 外的全部 speaker」。x ∈ except 当且仅当
 //     每个本地听众要么就是 x 本人、要么已显式退订 x（首期：静音=退订）。
 func (m *Manager) LocalDemand(roomID string) (want bool, except []string) {
-	return m.localDemand(roomID, auth.CapSubscribeAudio)
+	return m.localDemand(roomID, auth.CapSubscribeAudio, false)
 }
 
 // LocalScreenDemand 聚合本地观看端的屏幕轨订阅需求（伴轨跟随屏幕，共用此需求）：
 // 与 LocalDemand 同构，但观看侧仅要求 join（无独立 subscribe_screen cap，见
-// ShouldForwardScreen）。退订位图与音频共用（unsubscribe 按 user_id 对两类轨同时
-// 生效），故「本地全部成员都退订了 x」⇔「x 的屏幕轨不得跨节点拉流」（08 D.4/D.5）。
+// ShouldForwardScreen），且按退订位图的 video 维度聚合（协议 §2.1 kinds）：
+// 「本地全部成员都退订了 x 的视频」⇔「x 的屏幕轨不得跨节点拉流」（08 D.4/D.5）。
 func (m *Manager) LocalScreenDemand(roomID string) (want bool, except []string) {
-	return m.localDemand(roomID, auth.CapJoin)
+	return m.localDemand(roomID, auth.CapJoin, true)
 }
 
-func (m *Manager) localDemand(roomID, listenerCap string) (want bool, except []string) {
+func (m *Manager) localDemand(roomID, listenerCap string, video bool) (want bool, except []string) {
 	m.mu.RLock()
 	r, ok := m.rooms[roomID]
 	m.mu.RUnlock()
@@ -386,8 +389,10 @@ func (m *Manager) localDemand(roomID, listenerCap string) (want bool, except []s
 		}
 		p.mu.Lock()
 		u := make(map[string]struct{}, len(p.unsubscribed))
-		for k := range p.unsubscribed {
-			u[k] = struct{}{}
+		for k, marks := range p.unsubscribed {
+			if (video && marks.video) || (!video && marks.audio) {
+				u[k] = struct{}{}
+			}
 		}
 		p.mu.Unlock()
 		listeners = append(listeners, listener{uid: p.uid, unsub: u})

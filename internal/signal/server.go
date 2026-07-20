@@ -127,8 +127,11 @@ type iceD struct {
 	SDPMLineIndex *uint16 `json:"sdp_mline_index"`
 }
 
+// subD 为 subscribe/unsubscribe 上行帧载荷（协议 §2.1）：kinds 可选，
+// 取值 audio|video，缺省 = 全部轨类型（旧客户端行为不变）。
 type subD struct {
-	UserID string `json:"user_id"`
+	UserID string   `json:"user_id"`
+	Kinds  []string `json:"kinds"`
 }
 
 // setLayerD 为 set_layer 上行帧载荷（屏幕 simulcast 选层，docs 14 BA.3）：
@@ -274,13 +277,13 @@ func (s *Server) loop(wc *wsConn, conn *websocket.Conn, p *room.Participant) {
 			if err := json.Unmarshal(f.D, &d); err != nil || d.UserID == "" {
 				continue
 			}
-			p.Subscribe(d.UserID)
+			p.Subscribe(d.UserID, d.Kinds...)
 		case "unsubscribe":
 			var d subD
 			if err := json.Unmarshal(f.D, &d); err != nil || d.UserID == "" {
 				continue
 			}
-			p.Unsubscribe(d.UserID)
+			p.Unsubscribe(d.UserID, d.Kinds...)
 		case "set_layer":
 			var d setLayerD
 			if err := json.Unmarshal(f.D, &d); err != nil || d.UserID == "" || d.Layer == "" {

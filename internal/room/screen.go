@@ -64,7 +64,8 @@ type screenLayer struct {
 // ShouldForwardScreen 为屏幕轨（及系统音频伴轨）纯转发决策函数（单测锚点）：
 // 发布者需持 publish_screen；观看侧无独立 subscribe_screen cap（协议 caps 枚举仅四项），
 // 房内成员默认可看（docs 14 §7.4「同频道成员通过事件知悉谁在共享」），故仅要求 join；
-// 退订位图与音频共用（subscribe/unsubscribe 按 user_id，对该发布者的音频+屏幕同时生效）。
+// 退订位图按轨类型分维（subscribe/unsubscribe 的 kinds 字段，协议 §2.1）：
+// subUnsubscribed 传入 video 维度的退订标记，与音频维度独立。
 func ShouldForwardScreen(pubCaps, subCaps auth.CapSet, subUnsubscribed bool) bool {
 	return pubCaps.Has(auth.CapPublishScreen) &&
 		subCaps.Has(auth.CapJoin) &&
@@ -261,7 +262,7 @@ func (r *Room) ensureScreenDownTrack(pub, sub *Participant) bool {
 	if sub.closed.Load() || !pub.ScreenPublishing() {
 		return false
 	}
-	if !ShouldForwardScreen(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid)) {
+	if !ShouldForwardScreen(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid, KindScreen)) {
 		return false
 	}
 	key := TrackKey(pub.sid, KindScreen)
@@ -353,7 +354,7 @@ func (r *Room) rebuildScreenFanout(pub *Participant) {
 		sub.mu.Lock()
 		dt := sub.screenDown[key]
 		active := dt != nil && dt.active
-		_, unsub := sub.unsubscribed[pub.uid]
+		unsub := sub.hasUnsubscribedLocked(pub.uid, KindScreen)
 		want := sub.screenLayerSel[pub.uid]
 		sub.mu.Unlock()
 		if active && ShouldForwardScreen(pubCaps, sub.Caps(), unsub) {
@@ -640,7 +641,7 @@ func (r *Room) ensureScreenAudioDownTrack(pub, sub *Participant) bool {
 	if sub.closed.Load() || !pub.ScreenAudioPublishing() {
 		return false
 	}
-	if !ShouldForwardScreen(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid)) {
+	if !ShouldForwardScreen(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid, KindScreenAudio)) {
 		return false
 	}
 	key := TrackKey(pub.sid, KindScreenAudio)
@@ -694,7 +695,7 @@ func (r *Room) rebuildScreenAudioFanout(pub *Participant) {
 		sub.mu.Lock()
 		dt := sub.screenDown[key]
 		active := dt != nil && dt.active
-		_, unsub := sub.unsubscribed[pub.uid]
+		unsub := sub.hasUnsubscribedLocked(pub.uid, KindScreenAudio)
 		sub.mu.Unlock()
 		if active && ShouldForwardScreen(pubCaps, sub.Caps(), unsub) {
 			list = append(list, dt)

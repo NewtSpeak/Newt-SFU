@@ -57,6 +57,13 @@ func (r *Room) forwardLoop(p *Participant, read func([]byte) (int, error), audio
 			continue
 		}
 
+		// caps 门控（热更 + 挂起接纳，docs 11 AD.4）：无 publish_audio 时不转发、
+		// 不计 speaking、不录审计——轨保持静默挂起，抱上麦授予 cap 后立即生效；
+		// 发布权被收回时同理立即停止（继续读以排空缓冲）。
+		if !p.Caps().Has(auth.CapPublishAudio) {
+			continue
+		}
+
 		// speaking 检测：解析 ssrc-audio-level 扩展
 		if audioLevelExtID != 0 {
 			if raw := pkt.GetExtension(audioLevelExtID); raw != nil {
@@ -71,11 +78,6 @@ func (r *Room) forwardLoop(p *Participant, read func([]byte) (int, error), audio
 		// 音频审计（adminpresence）：旁路录制上行 RTP（不影响转发热路径）。
 		if rec := p.rec.Load(); rec != nil {
 			rec.write(&pkt)
-		}
-
-		// caps 热更：发布权被收回时立即停止转发（继续读以排空缓冲）
-		if !p.Caps().Has(auth.CapPublishAudio) {
-			continue
 		}
 
 		fanout := p.fanout.Load()

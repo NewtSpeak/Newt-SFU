@@ -45,6 +45,11 @@ type mediaSession struct {
 	sending   atomic.Bool
 	connected chan struct{}
 	closed    atomic.Bool
+	// transportFailed 传输层异常断开（WS 读错误 / PC failed），区别于服务端
+	// 主动 closed 帧；置位后 close() 回调 onTransportDead（BI.3 客户端侧上报）。
+	transportFailed atomic.Bool
+	// onTransportDead 传输异常回调（bot 据此向 Server 上报 /voice/ice-failed）。
+	onTransportDead func()
 
 	sent          atomic.Int64
 	recv          atomic.Int64
@@ -161,6 +166,10 @@ func (s *mediaSession) readLoop() {
 		_, data, err := s.conn.ReadMessage()
 		if err != nil {
 			s.log.Info("sfu ws closed", "err", err.Error())
+			// 读错误 = 传输层异常（节点死亡/网络断），非服务端优雅 closed 帧。
+			if !s.closed.Load() {
+				s.transportFailed.Store(true)
+			}
 			s.close()
 			return
 		}
@@ -282,6 +291,9 @@ func (s *mediaSession) close() {
 		close(s.stop)
 		s.pc.Close()
 		s.conn.Close()
+		if s.transportFailed.Load() && s.onTransportDead != nil {
+			go s.onTransportDead()
+		}
 	})
 }
 
@@ -495,10 +507,31 @@ func (b *serverBot) startSession(wssURL, token string) (*mediaSession, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 传输层异常断开（非服务端 closed 帧）且本会话仍是当前活跃会话 →
+	// 客户端侧 ICE/连接失败上报（BI.3 提前判死独立信号源，docs 15 §5）。
+	s.onTransportDead = func() {
+		b.mu.Lock()
+		active := b.active == s
+		b.mu.Unlock()
+		if !active {
+			return
+		}
+		b.reportIceFailed()
+	}
 	b.mu.Lock()
 	b.sessions = append(b.sessions, s)
 	b.mu.Unlock()
 	return s, nil
+}
+
+// reportIceFailed 向 Server 上报「与当前语音节点连接失败」（轻量端点，失败可忽略）。
+func (b *serverBot) reportIceFailed() {
+	err := b.api("POST", "/gapi/v1/voice/ice-failed", map[string]any{"guild_id": b.f.guild}, nil)
+	if err != nil {
+		b.log.Warn("ice-failed report failed", "err", err.Error())
+		return
+	}
+	fmt.Println(mustJSON(map[string]any{"event": "ice_failed_report", "at_ms": time.Now().UnixMilli()}))
 }
 
 func (b *serverBot) totals() (sent, recv, tracks int64) {
@@ -512,9 +545,14 @@ func (b *serverBot) totals() (sent, recv, tracks int64) {
 	return
 }
 
-// statsLoop 每 2s 打印一行 JSON 统计（e2e 脚本采样 recv 增长用）。
+// statsLoop 周期打印一行 JSON 统计（e2e 脚本采样 recv 增长用；at_ms 供时序断言，
+// 周期经 --stats-interval 可调）。
 func (b *serverBot) statsLoop(stop <-chan struct{}) {
-	t := time.NewTicker(2 * time.Second)
+	interval := b.f.statsInterval
+	if interval <= 0 {
+		interval = 2 * time.Second
+	}
+	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
 		select {
@@ -522,7 +560,10 @@ func (b *serverBot) statsLoop(stop <-chan struct{}) {
 			return
 		case <-t.C:
 			sent, recv, tracks := b.totals()
-			fmt.Println(mustJSON(map[string]any{"sent": sent, "recv": recv, "tracks": tracks, "migrations": b.migrations}))
+			fmt.Println(mustJSON(map[string]any{
+				"sent": sent, "recv": recv, "tracks": tracks,
+				"migrations": b.migrations, "at_ms": time.Now().UnixMilli(),
+			}))
 		}
 	}
 }

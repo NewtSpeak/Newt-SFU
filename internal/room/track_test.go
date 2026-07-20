@@ -79,7 +79,7 @@ func TestScreenAudioSubscriptionFollowsScreen(t *testing.T) {
 		t.Fatalf("expected screen-audio fanout=1, got %d", got)
 	}
 
-	r.setSubscription(sub, pub.uid, false)
+	sub.Unsubscribe(pub.uid)
 	if sub.screenDown[key].active {
 		t.Fatal("companion down track should be inactive after unsubscribe")
 	}
@@ -87,7 +87,7 @@ func TestScreenAudioSubscriptionFollowsScreen(t *testing.T) {
 		t.Fatalf("expected screen-audio fanout=0 after unsubscribe, got %d", got)
 	}
 
-	r.setSubscription(sub, pub.uid, true)
+	sub.Subscribe(pub.uid)
 	if got := screenAudioFanoutLen(pub); got != 1 {
 		t.Fatalf("expected screen-audio fanout=1 after resubscribe, got %d", got)
 	}

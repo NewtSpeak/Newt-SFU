@@ -61,8 +61,8 @@ func TestScreenSubscriptionPruning(t *testing.T) {
 		t.Fatalf("expected screen fanout=1, got %d", got)
 	}
 
-	// 退订：音频与屏幕轨同时失活
-	r.setSubscription(sub, pub.uid, false)
+	// 退订（缺省 kinds = 全部维度）：音频与屏幕轨同时失活
+	sub.Unsubscribe(pub.uid)
 	if sub.screenDown[key].active {
 		t.Fatal("screen down track should be inactive after unsubscribe")
 	}
@@ -71,7 +71,7 @@ func TestScreenSubscriptionPruning(t *testing.T) {
 	}
 
 	// 重订阅：屏幕转发恢复
-	r.setSubscription(sub, pub.uid, true)
+	sub.Subscribe(pub.uid)
 	if got := screenFanoutLen(pub); got != 1 {
 		t.Fatalf("expected screen fanout=1 after resubscribe, got %d", got)
 	}

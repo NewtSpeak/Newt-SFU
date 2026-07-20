@@ -40,6 +40,23 @@ type RTPWriter interface {
 	WriteRTP(p *rtp.Packet) error
 }
 
+// unsubKinds 为对某发布者的按轨类型退订标记（协议 §2.1 subscribe/unsubscribe 的
+// kinds 维度）：audio 作用于音频轨；video 作用于屏幕轨与系统音频伴轨（伴轨跟随
+// 屏幕会话，docs 14 BA.4）。两维均为 false 时等价于「未退订」（从位图删除）。
+type unsubKinds struct {
+	audio bool
+	video bool
+}
+
+// none 返回是否两维均未退订。
+func (u unsubKinds) none() bool { return !u.audio && !u.video }
+
+// kindIsVideo 把轨 kind 归并到订阅维度：screen / screen_audio 属 video 维度
+// （伴轨跟随屏幕，BA.4），其余（audio）属 audio 维度。
+func kindIsVideo(kind string) bool {
+	return kind == KindScreen || kind == KindScreenAudio
+}
+
 // downTrack 为一条「发布者→订阅者」下行轨。
 type downTrack struct {
 	pubUID string
@@ -76,12 +93,12 @@ type Participant struct {
 	expiryMs atomic.Int64 // token 过期时间 unix ms（auth 刷新时更新）
 
 	// mu 保护 downTracks（发布者 sid → 音频下行轨）、screenDown（trackKey →
-	// 屏幕/伴轨下行轨）、unsubscribed（发布者 uid 集合）、screenTcv/screenAudioTcv、
-	// screenLayers 与 screenLayerSel
+	// 屏幕/伴轨下行轨）、unsubscribed（发布者 uid → 按轨类型退订标记）、
+	// screenTcv/screenAudioTcv、screenLayers 与 screenLayerSel
 	mu           sync.Mutex
 	downTracks   map[string]*downTrack
 	screenDown   map[string]*downTrack
-	unsubscribed map[string]struct{}
+	unsubscribed map[string]unsubKinds
 
 	// fanout：本参与者作为发布者时的下行轨快照（转发热路径无锁读）
 	fanout     atomic.Pointer[[]*downTrack]
@@ -281,12 +298,12 @@ func (p *Participant) getDownTrack(pubSID string) *downTrack {
 	return p.downTracks[pubSID]
 }
 
-// isUnsubscribed 判断是否已退订某发布者（按 uid）。
-func (p *Participant) isUnsubscribed(pubUID string) bool {
+// isUnsubscribed 判断对某发布者某轨类型是否已退订（kind ∈ audio/screen/screen_audio，
+// 屏幕与伴轨共用 video 维度）。
+func (p *Participant) isUnsubscribed(pubUID, kind string) bool {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	_, ok := p.unsubscribed[pubUID]
-	return ok
+	return p.hasUnsubscribedLocked(pubUID, kind)
 }
 
 // expiryWatchdog 周期检查 token 过期；刷新帧会推迟过期时间。

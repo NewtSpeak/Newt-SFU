@@ -63,7 +63,7 @@ func addTestParticipant(mgr *Manager, r *Room, sid, uid string, capList ...strin
 		msgr:         &fakeMsgr{},
 		downTracks:   make(map[string]*downTrack),
 		screenDown:   make(map[string]*downTrack),
-		unsubscribed: make(map[string]struct{}),
+		unsubscribed: make(map[string]unsubKinds),
 		stopExpiry:   make(chan struct{}),
 	}
 	p.setCaps(auth.NewCapSet(capList))
@@ -95,10 +95,10 @@ func TestSubscriptionBitmap(t *testing.T) {
 		t.Fatalf("expected fanout=1, got %d", fanoutLen(pub))
 	}
 
-	// 退订：位图记录 + 下行轨失活 + fanout 清空
-	r.setSubscription(sub, pub.uid, false)
-	if !sub.isUnsubscribed(pub.uid) {
-		t.Fatal("unsubscribed bitmap should contain publisher uid")
+	// 退订（缺省 kinds = 全部维度）：位图记录 + 下行轨失活 + fanout 清空
+	sub.Unsubscribe(pub.uid)
+	if !sub.isUnsubscribed(pub.uid, KindAudio) || !sub.isUnsubscribed(pub.uid, KindScreen) {
+		t.Fatal("unsubscribed bitmap should mark both dimensions")
 	}
 	if sub.downTracks[pub.sid].active {
 		t.Fatal("down track should be inactive after unsubscribe")
@@ -108,12 +108,116 @@ func TestSubscriptionBitmap(t *testing.T) {
 	}
 
 	// 重订阅：恢复转发
-	r.setSubscription(sub, pub.uid, true)
-	if sub.isUnsubscribed(pub.uid) {
+	sub.Subscribe(pub.uid)
+	if sub.isUnsubscribed(pub.uid, KindAudio) || sub.isUnsubscribed(pub.uid, KindScreen) {
 		t.Fatal("unsubscribed bitmap should be cleared after subscribe")
 	}
 	if fanoutLen(pub) != 1 {
 		t.Fatalf("expected fanout=1 after resubscribe, got %d", fanoutLen(pub))
+	}
+}
+
+// TestSubscriptionKinds 按轨类型订阅粒度（协议 §2.1 kinds 字段）：
+// audio / video 两维独立：退订 video 不影响音频转发，反之亦然；
+// 叠加退订后按维度分别恢复。
+func TestSubscriptionKinds(t *testing.T) {
+	mgr, r := newTestRoom(t)
+	pub := addTestParticipant(mgr, r, "sid-pub", "u-pub",
+		auth.CapJoin, auth.CapPublishAudio, auth.CapSubscribeAudio, auth.CapPublishScreen)
+	sub := addTestParticipant(mgr, r, "sid-sub", "u-sub",
+		auth.CapJoin, auth.CapPublishAudio, auth.CapSubscribeAudio)
+
+	// 发布者同时在播音频 + 屏幕 + 伴轨
+	pub.publishing.Store(true)
+	screenKey := TrackKey(pub.sid, KindScreen)
+	screenAudioKey := TrackKey(pub.sid, KindScreenAudio)
+	sub.downTracks[pub.sid] = &downTrack{pubUID: pub.uid, active: true}
+	sub.screenDown[screenKey] = &downTrack{pubUID: pub.uid, active: true}
+	sub.screenDown[screenAudioKey] = &downTrack{pubUID: pub.uid, active: true}
+	r.rebuildFanout(pub)
+	r.rebuildScreenAudioFanout(pub)
+
+	// 只退订 video：屏幕/伴轨下行失活，音频不受影响
+	sub.Unsubscribe(pub.uid, KindVideo)
+	if sub.isUnsubscribed(pub.uid, KindAudio) {
+		t.Fatal("audio dimension should be untouched by video unsubscribe")
+	}
+	if !sub.isUnsubscribed(pub.uid, KindScreen) || !sub.isUnsubscribed(pub.uid, KindScreenAudio) {
+		t.Fatal("video dimension should mark screen and companion tracks")
+	}
+	if !sub.downTracks[pub.sid].active {
+		t.Fatal("audio down track should stay active")
+	}
+	if sub.screenDown[screenKey].active || sub.screenDown[screenAudioKey].active {
+		t.Fatal("screen/companion down tracks should be inactive")
+	}
+	if fanoutLen(pub) != 1 {
+		t.Fatalf("audio fanout should stay 1, got %d", fanoutLen(pub))
+	}
+	if got := screenAudioFanoutLen(pub); got != 0 {
+		t.Fatalf("companion fanout should be 0 after video unsubscribe, got %d", got)
+	}
+
+	// 叠加退订 audio（本地静音）：两维均退订
+	sub.Unsubscribe(pub.uid, KindAudio)
+	if !sub.isUnsubscribed(pub.uid, KindAudio) {
+		t.Fatal("audio dimension should be marked")
+	}
+	if fanoutLen(pub) != 0 {
+		t.Fatalf("audio fanout should be 0, got %d", fanoutLen(pub))
+	}
+
+	// 只恢复 video（被本地静音的用户开播，点观看只订视频）：audio 维持退订
+	sub.Subscribe(pub.uid, KindVideo)
+	if sub.isUnsubscribed(pub.uid, KindScreen) {
+		t.Fatal("video dimension should be cleared")
+	}
+	if !sub.isUnsubscribed(pub.uid, KindAudio) {
+		t.Fatal("audio dimension should stay unsubscribed")
+	}
+	if !sub.screenDown[screenKey].active || !sub.screenDown[screenAudioKey].active {
+		t.Fatal("screen/companion down tracks should be reactivated")
+	}
+	if fanoutLen(pub) != 0 {
+		t.Fatalf("audio fanout should stay 0, got %d", fanoutLen(pub))
+	}
+
+	// 恢复 audio：位图清空
+	sub.Subscribe(pub.uid, KindAudio)
+	if sub.isUnsubscribed(pub.uid, KindAudio) || sub.isUnsubscribed(pub.uid, KindScreen) {
+		t.Fatal("bitmap should be fully cleared")
+	}
+	sub.mu.Lock()
+	_, present := sub.unsubscribed[pub.uid]
+	sub.mu.Unlock()
+	if present {
+		t.Fatal("fully subscribed publisher should be removed from bitmap")
+	}
+	if fanoutLen(pub) != 1 {
+		t.Fatalf("audio fanout should recover to 1, got %d", fanoutLen(pub))
+	}
+}
+
+// TestSubscriptionKindsPersistBeforePublish 时序：先 unsubscribe video、发布者
+// 后发布屏幕轨——退订状态持久在会话上，ensureScreenDownTrack 按维度拒绝挂轨。
+func TestSubscriptionKindsPersistBeforePublish(t *testing.T) {
+	mgr, r := newTestRoom(t)
+	pub := addTestParticipant(mgr, r, "sid-pub", "u-pub",
+		auth.CapJoin, auth.CapPublishAudio, auth.CapSubscribeAudio, auth.CapPublishScreen)
+	sub := addTestParticipant(mgr, r, "sid-sub", "u-sub",
+		auth.CapJoin, auth.CapPublishAudio, auth.CapSubscribeAudio)
+
+	// 发布前退订 video
+	sub.Unsubscribe(pub.uid, KindVideo)
+
+	// 发布者屏幕轨上线：转发决策必须为 false（不为其挂屏幕下行轨）
+	pub.screenPublishing.Store(true)
+	if ShouldForwardScreen(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid, KindScreen)) {
+		t.Fatal("screen forwarding should stay off for pre-unsubscribed viewer")
+	}
+	// 音频维度不受影响
+	if !ShouldForward(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid, KindAudio)) {
+		t.Fatal("audio forwarding should be unaffected")
 	}
 }
 
@@ -146,7 +250,7 @@ func TestApplyCapsStopsForwarding(t *testing.T) {
 	delete(sub.downTracks, pub.sid)
 	sub.mu.Unlock()
 	r.applyCaps(sub, auth.NewCapSet([]string{auth.CapJoin}))
-	if ShouldForward(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid)) {
+	if ShouldForward(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid, KindAudio)) {
 		t.Fatal("should not forward to subscriber without subscribe_audio")
 	}
 }

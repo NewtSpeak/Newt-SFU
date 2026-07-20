@@ -197,7 +197,7 @@ func (m *Manager) Join(tok *auth.Token, msgr Messenger) (*Participant, []Partici
 		pc:           pc,
 		downTracks:   make(map[string]*downTrack),
 		screenDown:   make(map[string]*downTrack),
-		unsubscribed: make(map[string]struct{}),
+		unsubscribed: make(map[string]unsubKinds),
 		stopExpiry:   make(chan struct{}),
 		joinedAt:     time.Now(),
 	}
@@ -205,6 +205,7 @@ func (m *Manager) Join(tok *auth.Token, msgr Messenger) (*Participant, []Partici
 	p.expiryMs.Store(tok.ExpiresAt.UnixMilli())
 
 	// 成员快照（含自己之前的在房成员）：隐身临场成员对他人不可见，从快照剔除。
+	// Publishing 语义 = 对外可听的发布（挂起接纳的无 cap 音频轨不算，docs 11 AD.4）。
 	snapshot := make([]ParticipantInfo, 0, len(r.parts))
 	for _, other := range r.parts {
 		if other.hidden {
@@ -212,8 +213,9 @@ func (m *Manager) Join(tok *auth.Token, msgr Messenger) (*Participant, []Partici
 		}
 		snapshot = append(snapshot, ParticipantInfo{
 			UserID: other.uid, SessionID: other.sid,
-			Publishing: other.Publishing(), PublishingScreen: other.ScreenPublishing(),
-			IsBot: other.isBot,
+			Publishing:       other.Publishing() && other.Caps().Has(auth.CapPublishAudio),
+			PublishingScreen: other.ScreenPublishing(),
+			IsBot:            other.isBot,
 		})
 	}
 	r.parts[tok.SID] = p
@@ -272,11 +274,40 @@ func (m *Manager) wirePC(p *Participant) {
 	})
 }
 
-// Subscribe 恢复订阅某发布者。
-func (p *Participant) Subscribe(pubUID string) { p.room.setSubscription(p, pubUID, true) }
+// KindVideo 为 subscribe/unsubscribe 帧 kinds 字段的视频维度取值（协议 §2.1）：
+// 覆盖屏幕轨与系统音频伴轨（伴轨跟随屏幕会话，docs 14 BA.4）。
+const KindVideo = "video"
 
-// Unsubscribe 退订某发布者（静音=退订，真实停转发）。
-func (p *Participant) Unsubscribe(pubUID string) { p.room.setSubscription(p, pubUID, false) }
+// subscriptionMask 解析 kinds 列表为维度掩码：缺省（空列表）= 全部维度（旧客户端
+// 行为不变）；显式给出时按取值选择维度（"video" 同时覆盖 screen/screen_audio；
+// 亦宽容接受轨事件 kind 取值 "screen"/"screen_audio"）。全部取值未知时返回零掩码
+// （调用侧忽略该帧）。
+func subscriptionMask(kinds []string) unsubKinds {
+	if len(kinds) == 0 {
+		return unsubKinds{audio: true, video: true}
+	}
+	var m unsubKinds
+	for _, k := range kinds {
+		switch k {
+		case KindAudio:
+			m.audio = true
+		case KindVideo, KindScreen, KindScreenAudio:
+			m.video = true
+		}
+	}
+	return m
+}
+
+// Subscribe 恢复订阅某发布者的指定轨类型（kinds 为空 = 全部轨类型）。
+func (p *Participant) Subscribe(pubUID string, kinds ...string) {
+	p.room.setSubscription(p, pubUID, subscriptionMask(kinds), true)
+}
+
+// Unsubscribe 退订某发布者的指定轨类型（kinds 为空 = 全部；静音=退订 audio，
+// 不观看=退订 video，真实停转发）。
+func (p *Participant) Unsubscribe(pubUID string, kinds ...string) {
+	p.room.setSubscription(p, pubUID, subscriptionMask(kinds), false)
+}
 
 // ---- 控制通道指令入口 ----
 

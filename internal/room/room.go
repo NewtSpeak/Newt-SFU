@@ -95,22 +95,28 @@ func (r *Room) onTrack(p *Participant, track *webrtc.TrackRemote, receiver *webr
 
 // onAudioTrack 上行音频轨：广播 track_published、给订阅者挂下行轨、起转发循环。
 // 同会话第二条 audio 轨 = 屏幕共享系统音频伴轨（docs 14 BA.4，见 screen.go）。
+//
+// 无 publish_audio cap 的轨（STAGE 模式 AUDIENCE，docs 11 AD.4）**挂起接纳**而非
+// 丢弃：读循环照常启动，转发在 forwardLoop 内按包级 caps 门控保持静默；抱上麦
+// （bring-up → UpdateParticipantCaps 授予 cap）后 applyCaps 立即 track_published +
+// 挂订阅者下行轨，无需客户端重新发布，达成「bring-up 后 <1s 可发声」（15 BM M5）。
 func (r *Room) onAudioTrack(p *Participant, track *webrtc.TrackRemote, receiver *webrtc.RTPReceiver) {
 	if p.publishing.Load() {
 		r.onScreenAudioTrack(p, track, receiver)
 		return
 	}
-	if !p.Caps().Has(auth.CapPublishAudio) {
-		p.log.Warn("audio track received without publish_audio cap, ignoring", "sid", p.sid)
-		return
-	}
 	p.publishing.Store(true)
-	p.log.Info("publisher track up", "sid", p.sid, "uid", p.uid)
-	// 音频审计：开始录制该说话者上行音频（旁路，不影响转发）。
-	p.startAudit()
-	r.broadcast(p, "track_published", map[string]any{"user_id": p.uid, "kind": KindAudio})
-	r.attachSubscribersToPublisher(p)
-	r.mgr.cascadePublish(r.id, p.sid, p.uid, KindAudio, true)
+	if p.Caps().Has(auth.CapPublishAudio) {
+		p.log.Info("publisher track up", "sid", p.sid, "uid", p.uid)
+		// 音频审计：开始录制该说话者上行音频（旁路，不影响转发）。
+		p.startAudit()
+		r.broadcast(p, "track_published", map[string]any{"user_id": p.uid, "kind": KindAudio})
+		r.attachSubscribersToPublisher(p)
+		r.mgr.cascadePublish(r.id, p.sid, p.uid, KindAudio, true)
+	} else {
+		p.log.Info("audio track held pending publish_audio cap (audience, docs 11 AD.4)",
+			"sid", p.sid, "uid", p.uid)
+	}
 
 	extID := audioLevelExtensionID(receiver)
 	go func() {
@@ -118,8 +124,11 @@ func (r *Room) onAudioTrack(p *Participant, track *webrtc.TrackRemote, receiver 
 			n, _, err := track.Read(b)
 			return n, err
 		}, extID)
-		// 读循环退出 = 上行轨结束（PC 关闭或 transceiver 停止）
-		if p.publishing.CompareAndSwap(true, false) && !p.closed.Load() {
+		// 读循环退出 = 上行轨结束（PC 关闭或 transceiver 停止）。
+		// 仅在当前仍持 publish_audio（曾对外发布且未被 applyCaps 收回时摘除）
+		// 才广播 track_ended / 拆下行轨——挂起未发布的轨结束时对外无事件。
+		if p.publishing.CompareAndSwap(true, false) && !p.closed.Load() &&
+			p.Caps().Has(auth.CapPublishAudio) {
 			r.broadcast(p, "track_ended", map[string]any{"user_id": p.uid, "kind": KindAudio})
 			r.detachPublisher(p)
 			r.mgr.cascadePublish(r.id, p.sid, p.uid, KindAudio, false)
@@ -181,7 +190,7 @@ func (r *Room) ensureDownTrack(pub, sub *Participant) bool {
 	if sub.closed.Load() || !pub.Publishing() {
 		return false
 	}
-	if !ShouldForward(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid)) {
+	if !ShouldForward(pub.Caps(), sub.Caps(), sub.isUnsubscribed(pub.uid, KindAudio)) {
 		return false
 	}
 	sub.mu.Lock()
@@ -259,10 +268,7 @@ func (r *Room) rebuildFanout(pub *Participant) {
 		sub.mu.Lock()
 		dt := sub.downTracks[pub.sid]
 		active := dt != nil && dt.active
-		unsub := false
-		if _, ok := sub.unsubscribed[pub.uid]; ok {
-			unsub = true
-		}
+		unsub := sub.hasUnsubscribedLocked(pub.uid, KindAudio)
 		sub.mu.Unlock()
 		if active && ShouldForward(pubCaps, sub.Caps(), unsub) {
 			list = append(list, dt)
@@ -277,24 +283,40 @@ func (r *Room) rebuildFanout(pub *Participant) {
 	pub.fanout.Store(&list)
 }
 
-// setSubscription 处理 subscribe/unsubscribe(user_id)：对该发布者的音频、屏幕与系统
-// 音频伴轨同时生效（协议 §2.1 按 user_id 无 kind 维度，docs 14「订阅同音频语义」，
-// 伴轨订阅/退订跟随屏幕轨 BA.4）。
-func (r *Room) setSubscription(sub *Participant, pubUID string, want bool) {
+// setSubscription 处理 subscribe/unsubscribe(user_id, kinds)：按 mask 选中的轨类型
+// 维度对该发布者生效（协议 §2.1；kinds 缺省 = 全部维度，旧客户端行为不变）。
+// audio 维度作用于音频轨；video 维度作用于屏幕轨与系统音频伴轨（伴轨跟随屏幕
+// 会话，docs 14 BA.4）。退订状态持久在参与者会话上：先退订、发布者后发布的轨
+// 在 ensure*DownTrack 时按维度检查，不会误挂。
+func (r *Room) setSubscription(sub *Participant, pubUID string, mask unsubKinds, want bool) {
+	if mask.none() {
+		return
+	}
 	sub.mu.Lock()
-	if want {
+	cur := sub.unsubscribed[pubUID]
+	if mask.audio {
+		cur.audio = !want
+	}
+	if mask.video {
+		cur.video = !want
+	}
+	if cur.none() {
 		delete(sub.unsubscribed, pubUID)
 	} else {
-		sub.unsubscribed[pubUID] = struct{}{}
+		sub.unsubscribed[pubUID] = cur
 	}
-	for _, dt := range sub.downTracks {
-		if dt.pubUID == pubUID {
-			dt.active = want
+	if mask.audio {
+		for _, dt := range sub.downTracks {
+			if dt.pubUID == pubUID {
+				dt.active = want
+			}
 		}
 	}
-	for _, dt := range sub.screenDown {
-		if dt.pubUID == pubUID {
-			dt.active = want
+	if mask.video {
+		for _, dt := range sub.screenDown {
+			if dt.pubUID == pubUID {
+				dt.active = want
+			}
 		}
 	}
 	sub.mu.Unlock()
@@ -304,26 +326,48 @@ func (r *Room) setSubscription(sub *Participant, pubUID string, want bool) {
 			continue
 		}
 		if want {
-			// 重订阅：若此前从未建轨（如进房前已退订）则补建
-			r.ensureDownTrack(pub, sub)
-			r.ensureScreenDownTrack(pub, sub)
-			r.ensureScreenAudioDownTrack(pub, sub)
+			// 重订阅：若此前从未建轨（如进房前已退订）则按维度补建
+			if mask.audio {
+				r.ensureDownTrack(pub, sub)
+			}
+			if mask.video {
+				r.ensureScreenDownTrack(pub, sub)
+				r.ensureScreenAudioDownTrack(pub, sub)
+			}
 		}
-		r.rebuildFanout(pub)
-		r.rebuildScreenFanout(pub)
-		r.rebuildScreenAudioFanout(pub)
+		if mask.audio {
+			r.rebuildFanout(pub)
+		}
+		if mask.video {
+			r.rebuildScreenFanout(pub)
+			r.rebuildScreenAudioFanout(pub)
+			if want && pub.ScreenPublishing() {
+				// 视频重订阅（点观看）：主动请求关键帧缩短首帧等待（节流合并）
+				r.requestScreenKeyframe(pub, nil)
+			}
+		}
 	}
-	// 远端 speaker 的订阅同语义生效
+	// 远端发布者（级联送入）同语义生效
 	for _, rp := range r.snapshotRemotePubs() {
 		if rp.uid != pubUID {
 			continue
 		}
+		if kindIsVideo(rp.kind) {
+			if !mask.video {
+				continue
+			}
+		} else if !mask.audio {
+			continue
+		}
 		if want {
 			r.ensureRemoteDownTrack(rp, sub)
+			if rp.kind == KindScreen {
+				rp.RequestKeyframe()
+			}
 		}
 		r.rebuildRemoteFanout(rp)
 	}
-	// 退订/重订影响 NodeWant 聚合（08 §5.1：静音=退订 → 向上剪枝）
+	// 退订/重订影响 NodeWant 聚合（08 §5.1：静音/未观看=退订 → 向上剪枝）
 	r.mgr.cascadeDemand(r.id)
 }
 
@@ -345,8 +389,10 @@ func (r *Room) applyCaps(p *Participant, caps auth.CapSet) {
 			r.mgr.cascadePublish(r.id, p.sid, p.uid, KindAudio, false)
 		}
 	}
-	// 发布权恢复：上行轨若仍在流则重新对外分发
+	// 发布权恢复/授予：上行轨若仍在流（含挂起接纳的 AUDIENCE 轨，onAudioTrack）
+	// 则立即对外分发——bring-up 后 <1s 可发声（docs 11 AD.4 / 15 BM M5）。
 	if !old.Has(auth.CapPublishAudio) && caps.Has(auth.CapPublishAudio) && p.Publishing() {
+		p.startAudit()
 		r.broadcast(p, "track_published", map[string]any{"user_id": p.uid, "kind": KindAudio})
 		r.attachSubscribersToPublisher(p)
 		r.mgr.cascadePublish(r.id, p.sid, p.uid, KindAudio, true)

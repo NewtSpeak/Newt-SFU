@@ -49,6 +49,8 @@ type flags struct {
 	expectRecv      bool
 	screen          bool
 	expectRecvVideo bool
+	// statsInterval 统计行输出周期（e2e 需要细粒度时序断言时调小，如 100ms）。
+	statsInterval time.Duration
 
 	// 剪枝验证（M3，docs 08 D.5：静音 = 退订，跨级联真实停转发）
 	unsubscribeUser  string
@@ -97,6 +99,7 @@ func main() {
 	flag.BoolVar(&f.expectRecv, "expect-recv", true, "exit non-zero if no downstream RTP received")
 	flag.BoolVar(&f.screen, "screen", false, "also publish a synthetic VP8 screen track (token must carry publish_screen)")
 	flag.BoolVar(&f.expectRecvVideo, "expect-recv-video", false, "exit non-zero if no downstream video RTP received")
+	flag.DurationVar(&f.statsInterval, "stats-interval", 2*time.Second, "stats line output interval")
 	flag.StringVar(&f.unsubscribeUser, "unsubscribe-user", "", "user_id to unsubscribe from (prune verification, docs 08 D.5)")
 	flag.DurationVar(&f.unsubscribeAfter, "unsubscribe-after", 0, "send unsubscribe after this delay (0 = disabled)")
 	flag.DurationVar(&f.resubscribeAfter, "resubscribe-after", 0, "send subscribe again after this delay from start (0 = never)")
@@ -249,7 +252,7 @@ func runBot(log *slog.Logger, f flags) error {
 	if videoTrack != nil {
 		go videoSendLoop(videoTrack, &ctr, connected, stop)
 	}
-	go statsLoop(&ctr, stop)
+	go statsLoop(&ctr, f.statsInterval, stop)
 	if f.unsubscribeUser != "" && f.unsubscribeAfter > 0 {
 		go pruneLoop(log, ws, f, &ctr, connected, stop)
 	}
@@ -507,9 +510,12 @@ func videoSendLoop(track *webrtc.TrackLocalStaticRTP, ctr *counters, connected, 
 	}
 }
 
-// statsLoop 每 2s 打印一行 JSON 统计。
-func statsLoop(ctr *counters, stop <-chan struct{}) {
-	t := time.NewTicker(2 * time.Second)
+// statsLoop 周期打印一行 JSON 统计（at_ms 供 e2e 做时序断言）。
+func statsLoop(ctr *counters, interval time.Duration, stop <-chan struct{}) {
+	if interval <= 0 {
+		interval = 2 * time.Second
+	}
+	t := time.NewTicker(interval)
 	defer t.Stop()
 	for {
 		select {
@@ -519,6 +525,7 @@ func statsLoop(ctr *counters, stop <-chan struct{}) {
 			out, _ := json.Marshal(map[string]int64{
 				"sent": ctr.sent.Load(), "recv": ctr.recv.Load(), "tracks": ctr.tracks.Load(),
 				"sent_video": ctr.sentVideo.Load(), "recv_video": ctr.recvVideo.Load(),
+				"at_ms": time.Now().UnixMilli(),
 			})
 			fmt.Println(string(out))
 		}
