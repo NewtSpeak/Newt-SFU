@@ -42,8 +42,8 @@ advertise_cascade_endpoint: ""
 drain_timeout_sec: 60
 
 # 音频审计（adminpresence 专项）：token 带 audit claim 的会话（被审计频道）录制上行音频，
-# 落 data_dir/audit 后上传主节点服务器（POST audit_ingest_url，Bearer audit_ingest_token，
-# 与 Owl-Server 的 AUDIT_INGEST_TOKEN 对齐）。留空 URL/token 则仅落本地盘不上传。
+# 落 data_dir/audit 后上传主节点服务器（POST audit_ingest_url，Bearer audit_ingest_token）。
+# 留空时采用 RegisterAck 主节点下发的配置（开发零配置）；显式填写则覆盖下发值。
 audit_ingest_url: ""       # 如 https://chat.example.com/audit-api/records
 audit_ingest_token: ""     # 与 Owl-Server AUDIT_INGEST_TOKEN 相同的共享密钥
 audit_keep_local: false    # 上传成功后是否保留本地录音（默认删除节省磁盘）

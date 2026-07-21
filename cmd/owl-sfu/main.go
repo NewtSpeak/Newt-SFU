@@ -142,9 +142,27 @@ func run(configPath string, log *slog.Logger) error {
 	mgr := room.NewManager(log, engine, metrics, st, cfg.MaxUsers)
 
 	// 音频审计（adminpresence 专项）：token 带 audit claim 的会话录制上行音频，
-	// 落 DataDir/audit 后经 uploader 上传主节点（未配置上传地址/密钥时仅落盘）。
-	auditUploader := audit.NewUploader(log, cfg.AuditIngestURL, cfg.AuditIngestToken, cfg.AuditKeepLocal)
-	mgr.SetAudit(cfg.NodeID, filepath.Join(cfg.DataDir, "audit"), auditUploader)
+	// 落 DataDir/audit 后经 uploader 上传主节点。
+	// 本地 yaml/env 优先；若留空则等 RegisterAck 由主节点下发（零配置对齐）。
+	auditDir := filepath.Join(cfg.DataDir, "audit")
+	var lastAuditURL, lastAuditToken string
+	applyAuditIngest := func(url, token string, source string) {
+		if url == lastAuditURL && token == lastAuditToken {
+			return
+		}
+		lastAuditURL, lastAuditToken = url, token
+		if url == "" || token == "" {
+			mgr.SetAudit(cfg.NodeID, auditDir, nil)
+			if source == "local_config" {
+				log.Info("audit ingest waiting for RegisterAck (or set OWLSFU_AUDIT_INGEST_*)")
+			}
+			return
+		}
+		uploader := audit.NewUploader(log, url, token, cfg.AuditKeepLocal)
+		mgr.SetAudit(cfg.NodeID, auditDir, uploader)
+		log.Info("audit ingest configured", "url", url, "source", source)
+	}
+	applyAuditIngest(cfg.AuditIngestURL, cfg.AuditIngestToken, "local_config")
 
 	// 级联（M3）：mTLS 信令端口 + 节点间媒体（复用 engine UDPMux）；
 	// token 验签走 Media Token 同源公钥（Enroll/RegisterAck 下发，BG.2 三重校验）。
@@ -190,6 +208,19 @@ func run(configPath string, log *slog.Logger) error {
 		},
 		&controlBackend{mgr: mgr, verifier: verifier, cascade: casc, migrate: mig},
 		verifier, st, metrics)
+	// RegisterAck 可下发 audit_ingest_*：本地未配置时采用主节点下发值。
+	ctrl.SetOnRegisterAck(func(ack *owlsfuv1.RegisterAck) {
+		url, token := cfg.AuditIngestURL, cfg.AuditIngestToken
+		if url == "" {
+			url = ack.GetAuditIngestUrl()
+		}
+		if token == "" {
+			token = ack.GetAuditIngestToken()
+		}
+		// 仅在相对启动时有变化时重配，避免心跳重连反复刷日志；
+		// 但 token/url 可能从空变为有，必须应用。
+		applyAuditIngest(url, token, "register_ack")
+	})
 	mgr.SetEvents(ctrl)
 	casc.SetReporter(ctrl)
 	go ctrl.Run(ctx)

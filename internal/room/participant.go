@@ -173,7 +173,9 @@ func (p *Participant) ScreenPublishing() bool { return p.screenPublishing.Load()
 // ScreenAudioPublishing 返回是否有活跃上行系统音频伴轨（docs 14 BA.4）。
 func (p *Participant) ScreenAudioPublishing() bool { return p.screenAudioPublishing.Load() }
 
-// RefreshToken 处理重复 auth 帧（token 刷新）：sid 必须一致，仅更新过期时间。
+// RefreshToken 处理重复 auth 帧（token 刷新）：sid 必须一致；更新过期时间，并
+// 同步 audit/hidden claim（管理员中途开关审计/隐身后，客户端在位重发 auth 即可生效，
+// 无需整房重连）。
 func (p *Participant) RefreshToken(tok *auth.Token) error {
 	if tok.SID != p.sid {
 		return fmt.Errorf("refresh token sid mismatch")
@@ -182,6 +184,20 @@ func (p *Participant) RefreshToken(tok *auth.Token) error {
 		return fmt.Errorf("refresh token rid mismatch")
 	}
 	p.expiryMs.Store(tok.ExpiresAt.UnixMilli())
+
+	// hidden：中途开关仅影响后续 joined/left 广播；已在房成员不回放历史事件。
+	p.hidden = tok.Hidden
+
+	// audit：中途开启 → 若已在发布上行则立即开录；中途关闭 → 收尾并上传当前段。
+	if tok.Audit && !p.audit {
+		p.audit = true
+		if p.publishing.Load() && p.Caps().Has(auth.CapPublishAudio) {
+			p.startAudit()
+		}
+	} else if !tok.Audit && p.audit {
+		p.audit = false
+		p.finishAudit()
+	}
 	return nil
 }
 

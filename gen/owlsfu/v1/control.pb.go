@@ -940,8 +940,12 @@ type RegisterAck struct {
 	NodeId              string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	HeartbeatIntervalMs uint32                 `protobuf:"varint,2,opt,name=heartbeat_interval_ms,json=heartbeatIntervalMs,proto3" json:"heartbeat_interval_ms,omitempty"` // 定稿 5000（15 BI.1）
 	MediaTokenKeys      []*MediaTokenKey       `protobuf:"bytes,3,rep,name=media_token_keys,json=mediaTokenKeys,proto3" json:"media_token_keys,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	// 音频审计上传（adminpresence）：主节点 /audit-api/records 地址与共享密钥。
+	// SFU 本地未配置 audit_ingest_* 时采用此处下发值；二者皆空则仅本地落盘不上传。
+	AuditIngestUrl   string `protobuf:"bytes,4,opt,name=audit_ingest_url,json=auditIngestUrl,proto3" json:"audit_ingest_url,omitempty"`
+	AuditIngestToken string `protobuf:"bytes,5,opt,name=audit_ingest_token,json=auditIngestToken,proto3" json:"audit_ingest_token,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *RegisterAck) Reset() {
@@ -993,6 +997,20 @@ func (x *RegisterAck) GetMediaTokenKeys() []*MediaTokenKey {
 		return x.MediaTokenKeys
 	}
 	return nil
+}
+
+func (x *RegisterAck) GetAuditIngestUrl() string {
+	if x != nil {
+		return x.AuditIngestUrl
+	}
+	return ""
+}
+
+func (x *RegisterAck) GetAuditIngestToken() string {
+	if x != nil {
+		return x.AuditIngestToken
+	}
+	return ""
 }
 
 type Command struct {
@@ -1865,11 +1883,13 @@ const file_owlsfu_v1_control_proto_rawDesc = "" +
 	"\rServerMessage\x12;\n" +
 	"\fregister_ack\x18\x01 \x01(\v2\x16.owlsfu.v1.RegisterAckH\x00R\vregisterAck\x12.\n" +
 	"\acommand\x18\x02 \x01(\v2\x12.owlsfu.v1.CommandH\x00R\acommandB\t\n" +
-	"\apayload\"\x9e\x01\n" +
+	"\apayload\"\xf6\x01\n" +
 	"\vRegisterAck\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x122\n" +
 	"\x15heartbeat_interval_ms\x18\x02 \x01(\rR\x13heartbeatIntervalMs\x12B\n" +
-	"\x10media_token_keys\x18\x03 \x03(\v2\x18.owlsfu.v1.MediaTokenKeyR\x0emediaTokenKeys\"\xc5\x05\n" +
+	"\x10media_token_keys\x18\x03 \x03(\v2\x18.owlsfu.v1.MediaTokenKeyR\x0emediaTokenKeys\x12(\n" +
+	"\x10audit_ingest_url\x18\x04 \x01(\tR\x0eauditIngestUrl\x12,\n" +
+	"\x12audit_ingest_token\x18\x05 \x01(\tR\x10auditIngestToken\"\xc5\x05\n" +
 	"\aCommand\x12\x1d\n" +
 	"\n" +
 	"command_id\x18\x01 \x01(\tR\tcommandId\x12N\n" +

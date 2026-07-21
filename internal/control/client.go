@@ -68,6 +68,13 @@ type Client struct {
 	// outbox 承载 RoomEvent / EdgeStatus / DrainRequest 等异步上行消息，
 	// 发送失败回灌等重连补发。
 	outbox chan *owlsfuv1.NodeMessage
+	// onRegisterAck 每次 RegisterAck 成功后回调（用于应用 Server 下发的审计上传配置等）。
+	onRegisterAck func(ack *owlsfuv1.RegisterAck)
+}
+
+// SetOnRegisterAck 注册 RegisterAck 回调（可在 NewClient 之后、Run 之前调用）。
+func (c *Client) SetOnRegisterAck(fn func(ack *owlsfuv1.RegisterAck)) {
+	c.onRegisterAck = fn
 }
 
 // NewClient 构建控制通道客户端。getCert 以回调形式取节点证书（证书续期热更新：
@@ -236,6 +243,9 @@ func (c *Client) runOnce(ctx context.Context, backoff *time.Duration) error {
 	c.verifier.UpdateKeys(ack.GetMediaTokenKeys())
 	*backoff = backoffInitial // 注册成功即重置退避
 	c.log.Info("control channel registered", "node_id", ack.GetNodeId(), "heartbeat_ms", heartbeatMs)
+	if c.onRegisterAck != nil {
+		c.onRegisterAck(ack)
+	}
 
 	// 心跳
 	go func() {
