@@ -16,6 +16,7 @@ import (
 	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
 	"github.com/owlspeak/owl-sfu/internal/audit"
 	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/owlspeak/owl-sfu/internal/buildinfo"
 	"github.com/owlspeak/owl-sfu/internal/cascade"
 	"github.com/owlspeak/owl-sfu/internal/config"
 	"github.com/owlspeak/owl-sfu/internal/control"
@@ -27,8 +28,6 @@ import (
 	"github.com/owlspeak/owl-sfu/internal/signal"
 	"github.com/owlspeak/owl-sfu/internal/stats"
 )
-
-const nodeVersion = "0.1.0-m1"
 
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to YAML config file")
@@ -99,8 +98,8 @@ func run(configPath string, log *slog.Logger) error {
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
-	log.Info("config loaded", "node_id", cfg.NodeID, "wss_listen", cfg.WSSListen,
-		"media_udp_port", cfg.MediaUDPPort)
+	log.Info("config loaded", "node_id", cfg.NodeID, "version", buildinfo.Version,
+		"wss_listen", cfg.WSSListen, "media_udp_port", cfg.MediaUDPPort)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -112,7 +111,7 @@ func run(configPath string, log *slog.Logger) error {
 		EnrollToken:    cfg.EnrollToken,
 		EnrollEndpoint: cfg.ServerEnrollEndpoint,
 		EnrollInsecure: cfg.EnrollInsecure,
-		NodeVersion:    nodeVersion,
+		NodeVersion:    buildinfo.Version,
 	})
 	if err != nil {
 		return fmt.Errorf("enrollment: %w", err)
@@ -198,7 +197,7 @@ func run(configPath string, log *slog.Logger) error {
 	go renewer.Run(ctx)
 
 	// 控制通道
-	ctrl := control.NewClient(log, controlAddr, nodeVersion,
+	ctrl := control.NewClient(log, controlAddr, buildinfo.Version,
 		certSource.Get, identity.CAPool,
 		&owlsfuv1.NodeAdvertise{
 			WssUrl:          cfg.AdvertiseWSSURL,

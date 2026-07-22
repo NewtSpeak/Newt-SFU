@@ -18,6 +18,7 @@ import (
 	"github.com/owlspeak/owl-sfu/internal/auth"
 	"github.com/owlspeak/owl-sfu/internal/observability"
 	"github.com/owlspeak/owl-sfu/internal/stats"
+	"github.com/owlspeak/owl-sfu/internal/update"
 )
 
 const (
@@ -257,8 +258,9 @@ func (c *Client) runOnce(ctx context.Context, backoff *time.Duration) error {
 				return
 			case <-t.C:
 				if err := send(&owlsfuv1.NodeMessage{Payload: &owlsfuv1.NodeMessage_Heartbeat{Heartbeat: &owlsfuv1.Heartbeat{
-					Capacity: c.stats.Capacity(),
-					UnixMs:   time.Now().UnixMilli(),
+					Capacity:    c.stats.Capacity(),
+					UnixMs:      time.Now().UnixMilli(),
+					NodeVersion: c.nodeVersion,
 				}}}); err != nil {
 					return
 				}
@@ -396,6 +398,28 @@ func (c *Client) execute(cmd *owlsfuv1.Command) *owlsfuv1.CommandAck {
 		c.log.Info("migrate participants executed", "migration_id", mp.GetMigrationId(),
 			"room", mp.GetRoomId(), "requested", len(mp.GetSessionIds()), "closed", n)
 		return ok()
+	case *owlsfuv1.Command_UpdateBinary:
+		ub := payload.UpdateBinary
+		// 下载可能较久：单独超时上下文，避免无限挂起。
+		ctx, cancel := context.WithTimeout(context.Background(), 12*time.Minute)
+		defer cancel()
+		result, err := update.Apply(ctx, c.log, update.Options{
+			TargetVersion:  ub.GetTargetVersion(),
+			DownloadURL:    ub.GetDownloadUrl(),
+			SHA256Hex:      ub.GetSha256Hex(),
+			Force:          ub.GetForce(),
+			CurrentVersion: c.nodeVersion,
+		})
+		if err != nil {
+			c.log.Error("update binary failed", "err", err, "target", ub.GetTargetVersion())
+			return fail("UPDATE_FAILED", err.Error())
+		}
+		if result.Skipped {
+			c.log.Info("update binary skipped", "version", ub.GetTargetVersion(), "msg", result.Message)
+			return ok()
+		}
+		c.log.Info("update binary accepted", "target", ub.GetTargetVersion(), "msg", result.Message)
+		return ok()
 	default:
 		return fail("BAD_COMMAND", "unknown or empty command payload")
 	}
@@ -422,6 +446,8 @@ func commandType(cmd *owlsfuv1.Command) string {
 		return "set_cascade_edges"
 	case *owlsfuv1.Command_MigrateParticipants:
 		return "migrate_participants"
+	case *owlsfuv1.Command_UpdateBinary:
+		return "update_binary"
 	default:
 		return "unknown"
 	}

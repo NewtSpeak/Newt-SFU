@@ -14,6 +14,7 @@ import (
 	"github.com/pion/webrtc/v4"
 	"github.com/prometheus/client_golang/prometheus"
 
+	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
 	"github.com/owlspeak/owl-sfu/internal/room"
 	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
 )
@@ -43,6 +44,8 @@ type countingSink struct {
 	active  *atomic.Bool // 指向所属边的转发授权开关
 	bytes   prometheus.Counter
 	packets prometheus.Counter
+	// total 可选：累计字节（供 EdgeStatus 拓扑上报读回；nil 时仅 prometheus）。
+	total *atomic.Uint64
 }
 
 // WriteRTP 门控写入：边未授权（租约过期/epoch 不匹配/未建立）时静默丢弃。
@@ -53,8 +56,12 @@ func (cs *countingSink) WriteRTP(p *rtp.Packet) error {
 	if err := cs.track.WriteRTP(p); err != nil {
 		return err
 	}
+	n := uint64(p.MarshalSize())
 	cs.packets.Inc()
-	cs.bytes.Add(float64(p.MarshalSize()))
+	cs.bytes.Add(float64(n))
+	if cs.total != nil {
+		cs.total.Add(n)
+	}
 	return nil
 }
 
@@ -95,6 +102,16 @@ type edgeSession struct {
 	negPending  bool
 
 	rttMs atomic.Uint64 // math.Float64bits
+
+	// 累计 RTP 字节（本端视角；EdgeStatus 上报给 Server 做拓扑流量差分）
+	totalTxBytes atomic.Uint64
+	totalRxBytes atomic.Uint64
+
+	// 媒体选中路径快照（ICE selected pair；path.go 解析）
+	pathMu     sync.Mutex
+	pathType   owlsfuv1.EdgeStatus_PathType
+	localCand  string
+	remoteCand string
 
 	// 预解析的每边指标（热路径避免 WithLabelValues 查表）
 	txBytes, txPackets, rxBytes, rxPackets prometheus.Counter
@@ -218,6 +235,59 @@ func (s *edgeSession) handleFrame(f *frame) {
 
 // RTT 返回最近一次探测的 RTT（毫秒，未测得为 0）。
 func (s *edgeSession) RTT() float64 { return math.Float64frombits(s.rttMs.Load()) }
+
+// trafficSnapshot 返回本端累计 RTP 字节与选中路径。
+func (s *edgeSession) trafficSnapshot() (tx, rx uint64, path owlsfuv1.EdgeStatus_PathType, localIP, remoteIP string) {
+	s.refreshSelectedPath()
+	s.pathMu.Lock()
+	defer s.pathMu.Unlock()
+	return s.totalTxBytes.Load(), s.totalRxBytes.Load(), s.pathType, s.localCand, s.remoteCand
+}
+
+// refreshSelectedPath 从发送/接收 PC 的 ICE selected pair 推断内网/外网。
+func (s *edgeSession) refreshSelectedPath() {
+	s.pcMu.Lock()
+	pcs := []*webrtc.PeerConnection{s.sendPC, s.recvPC}
+	s.pcMu.Unlock()
+	for _, pc := range pcs {
+		if pc == nil {
+			continue
+		}
+		localIP, remoteIP, ok := selectedPairIPs(pc)
+		if !ok {
+			continue
+		}
+		pt := classifyPath(localIP, remoteIP)
+		s.pathMu.Lock()
+		s.localCand = localIP
+		s.remoteCand = remoteIP
+		s.pathType = pt
+		s.pathMu.Unlock()
+		return
+	}
+	// ICE 尚未选出时：用级联信令 TCP 对端地址做粗判（信令与媒体通常同路径偏好）
+	if s.conn != nil {
+		if ra, ok := s.conn.RemoteAddr().(*net.TCPAddr); ok && ra.IP != nil {
+			remoteIP := ra.IP.String()
+			localIP := ""
+			if la, ok := s.conn.LocalAddr().(*net.TCPAddr); ok && la.IP != nil {
+				localIP = la.IP.String()
+			}
+			pt := classifyPath(localIP, remoteIP)
+			s.pathMu.Lock()
+			if s.localCand == "" {
+				s.localCand = localIP
+			}
+			if s.remoteCand == "" {
+				s.remoteCand = remoteIP
+			}
+			if s.pathType == owlsfuv1.EdgeStatus_PATH_TYPE_UNSPECIFIED {
+				s.pathType = pt
+			}
+			s.pathMu.Unlock()
+		}
+	}
+}
 
 // ---- 媒体 PC ----
 
@@ -445,7 +515,7 @@ func (s *edgeSession) addOutTrackLocked(key, uid, kind string, local bool) bool 
 
 	ot := &outTrack{
 		key: key, uid: uid, kind: kind, local: local, track: track, sender: sender,
-		sink: &countingSink{track: track, active: &s.active, bytes: s.txBytes, packets: s.txPackets},
+		sink: &countingSink{track: track, active: &s.active, bytes: s.txBytes, packets: s.txPackets, total: &s.totalTxBytes},
 	}
 	if local {
 		detach, err := s.mgr.rooms.AttachCascadeSink(s.edge.RoomID, key, ot.sink)

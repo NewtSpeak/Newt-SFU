@@ -391,6 +391,7 @@ func (m *Manager) remoteReadLoop(s *edgeSession, rsp *remoteSpeaker, track *webr
 		}
 		s.rxPackets.Inc()
 		s.rxBytes.Add(float64(n))
+		s.totalRxBytes.Add(uint64(n))
 		// 复用 pkt：清空上一包扩展防残留
 		pkt.Header.Extensions = pkt.Header.Extensions[:0]
 		pkt.Header.Extension = false
@@ -466,14 +467,28 @@ func (m *Manager) onEdgeClosed(s *edgeSession) {
 
 // reportEdgeStatus 经控制通道上报边状态（08 §6.1）。
 // loss_pct 首期恒为 0：纯转发链路无 RTCP 汇聚点，二期由 sender report 差分补齐。
+// bytes/path 由会话可选附带：无会话时（建边前/已拆）仅状态与 RTT。
 func (m *Manager) reportEdgeStatus(e Edge, state owlsfuv1.EdgeStatus_State, rttMs float64) {
+	m.reportEdgeStatusFull(e, state, rttMs, 0, 0, owlsfuv1.EdgeStatus_PATH_TYPE_UNSPECIFIED, "", "")
+}
+
+// reportEdgeStatusFull 上报完整边快照（含累计流量与路径类型，供管理台拓扑）。
+func (m *Manager) reportEdgeStatusFull(
+	e Edge, state owlsfuv1.EdgeStatus_State, rttMs float64,
+	bytesTx, bytesRx uint64, path owlsfuv1.EdgeStatus_PathType, localIP, remoteIP string,
+) {
 	m.report(&owlsfuv1.EdgeStatus{
-		RoomId:       e.RoomID,
-		Epoch:        e.Epoch,
-		ParentNodeId: e.ParentNodeID,
-		ChildNodeId:  e.ChildNodeID,
-		State:        state,
-		RttMs:        rttMs,
+		RoomId:            e.RoomID,
+		Epoch:             e.Epoch,
+		ParentNodeId:      e.ParentNodeID,
+		ChildNodeId:       e.ChildNodeID,
+		State:             state,
+		RttMs:             rttMs,
+		BytesTx:           bytesTx,
+		BytesRx:           bytesRx,
+		PathType:          path,
+		LocalCandidateIp:  localIP,
+		RemoteCandidateIp: remoteIP,
 	})
 }
 
@@ -502,7 +517,8 @@ func (m *Manager) edgeEstablished(s *edgeSession) bool {
 
 	m.metrics.CascadeEdges.Inc()
 	m.metrics.CascadeEdgeUp.Inc()
-	m.reportEdgeStatus(s.edge, owlsfuv1.EdgeStatus_STATE_EDGE_UP, 0)
+	tx, rx, path, lip, rip := s.trafficSnapshot()
+	m.reportEdgeStatusFull(s.edge, owlsfuv1.EdgeStatus_STATE_EDGE_UP, 0, tx, rx, path, lip, rip)
 	m.log.Info("cascade edge up", "room", s.edge.RoomID, "edge", key, "is_parent", s.isParent)
 	m.recompute(s.edge.RoomID)
 	return true
@@ -699,7 +715,8 @@ func (m *Manager) watchdog() {
 				m.recompute(roomID)
 			}
 			for _, s := range reports {
-				m.reportEdgeStatus(s.edge, owlsfuv1.EdgeStatus_STATE_EDGE_UP, s.RTT())
+				tx, rx, path, lip, rip := s.trafficSnapshot()
+				m.reportEdgeStatusFull(s.edge, owlsfuv1.EdgeStatus_STATE_EDGE_UP, s.RTT(), tx, rx, path, lip, rip)
 			}
 		}
 	}

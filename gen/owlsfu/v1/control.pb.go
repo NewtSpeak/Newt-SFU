@@ -128,6 +128,55 @@ func (EdgeStatus_State) EnumDescriptor() ([]byte, []int) {
 	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{6, 0}
 }
 
+type EdgeStatus_PathType int32
+
+const (
+	EdgeStatus_PATH_TYPE_UNSPECIFIED EdgeStatus_PathType = 0
+	EdgeStatus_PATH_TYPE_LAN         EdgeStatus_PathType = 1 // 内网 / 私网 IP 互通
+	EdgeStatus_PATH_TYPE_WAN         EdgeStatus_PathType = 2 // 公网 / 外网
+)
+
+// Enum value maps for EdgeStatus_PathType.
+var (
+	EdgeStatus_PathType_name = map[int32]string{
+		0: "PATH_TYPE_UNSPECIFIED",
+		1: "PATH_TYPE_LAN",
+		2: "PATH_TYPE_WAN",
+	}
+	EdgeStatus_PathType_value = map[string]int32{
+		"PATH_TYPE_UNSPECIFIED": 0,
+		"PATH_TYPE_LAN":         1,
+		"PATH_TYPE_WAN":         2,
+	}
+)
+
+func (x EdgeStatus_PathType) Enum() *EdgeStatus_PathType {
+	p := new(EdgeStatus_PathType)
+	*p = x
+	return p
+}
+
+func (x EdgeStatus_PathType) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (EdgeStatus_PathType) Descriptor() protoreflect.EnumDescriptor {
+	return file_owlsfu_v1_control_proto_enumTypes[2].Descriptor()
+}
+
+func (EdgeStatus_PathType) Type() protoreflect.EnumType {
+	return &file_owlsfu_v1_control_proto_enumTypes[2]
+}
+
+func (x EdgeStatus_PathType) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use EdgeStatus_PathType.Descriptor instead.
+func (EdgeStatus_PathType) EnumDescriptor() ([]byte, []int) {
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{6, 1}
+}
+
 type DisconnectUser_Reason int32
 
 const (
@@ -170,11 +219,11 @@ func (x DisconnectUser_Reason) String() string {
 }
 
 func (DisconnectUser_Reason) Descriptor() protoreflect.EnumDescriptor {
-	return file_owlsfu_v1_control_proto_enumTypes[2].Descriptor()
+	return file_owlsfu_v1_control_proto_enumTypes[3].Descriptor()
 }
 
 func (DisconnectUser_Reason) Type() protoreflect.EnumType {
-	return &file_owlsfu_v1_control_proto_enumTypes[2]
+	return &file_owlsfu_v1_control_proto_enumTypes[3]
 }
 
 func (x DisconnectUser_Reason) Number() protoreflect.EnumNumber {
@@ -183,7 +232,7 @@ func (x DisconnectUser_Reason) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use DisconnectUser_Reason.Descriptor instead.
 func (DisconnectUser_Reason) EnumDescriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{13, 0}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{14, 0}
 }
 
 type MigrateParticipants_Phase int32
@@ -219,11 +268,11 @@ func (x MigrateParticipants_Phase) String() string {
 }
 
 func (MigrateParticipants_Phase) Descriptor() protoreflect.EnumDescriptor {
-	return file_owlsfu_v1_control_proto_enumTypes[3].Descriptor()
+	return file_owlsfu_v1_control_proto_enumTypes[4].Descriptor()
 }
 
 func (MigrateParticipants_Phase) Type() protoreflect.EnumType {
-	return &file_owlsfu_v1_control_proto_enumTypes[3]
+	return &file_owlsfu_v1_control_proto_enumTypes[4]
 }
 
 func (x MigrateParticipants_Phase) Number() protoreflect.EnumNumber {
@@ -232,7 +281,7 @@ func (x MigrateParticipants_Phase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MigrateParticipants_Phase.Descriptor instead.
 func (MigrateParticipants_Phase) EnumDescriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{19, 0}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{20, 0}
 }
 
 type NodeMessage struct {
@@ -557,9 +606,11 @@ func (x *NodeAdvertise) GetCascadeEndpoint() string {
 }
 
 type Heartbeat struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Capacity      *NodeCapacity          `protobuf:"bytes,1,opt,name=capacity,proto3" json:"capacity,omitempty"`
-	UnixMs        int64                  `protobuf:"varint,2,opt,name=unix_ms,json=unixMs,proto3" json:"unix_ms,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Capacity *NodeCapacity          `protobuf:"bytes,1,opt,name=capacity,proto3" json:"capacity,omitempty"`
+	UnixMs   int64                  `protobuf:"varint,2,opt,name=unix_ms,json=unixMs,proto3" json:"unix_ms,omitempty"`
+	// 运行中版本（与 Register.node_version 一致；便于热更新后未重连时也能刷新）。
+	NodeVersion   string `protobuf:"bytes,3,opt,name=node_version,json=nodeVersion,proto3" json:"node_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -606,6 +657,13 @@ func (x *Heartbeat) GetUnixMs() int64 {
 		return x.UnixMs
 	}
 	return 0
+}
+
+func (x *Heartbeat) GetNodeVersion() string {
+	if x != nil {
+		return x.NodeVersion
+	}
+	return ""
 }
 
 type RoomEvent struct {
@@ -694,16 +752,24 @@ func (x *RoomEvent) GetUnixMs() int64 {
 
 // 级联边状态（08 §6.1；M3 使用，M1 预留）。
 type EdgeStatus struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
-	Epoch         uint64                 `protobuf:"varint,2,opt,name=epoch,proto3" json:"epoch,omitempty"`
-	ParentNodeId  string                 `protobuf:"bytes,3,opt,name=parent_node_id,json=parentNodeId,proto3" json:"parent_node_id,omitempty"`
-	ChildNodeId   string                 `protobuf:"bytes,4,opt,name=child_node_id,json=childNodeId,proto3" json:"child_node_id,omitempty"`
-	State         EdgeStatus_State       `protobuf:"varint,5,opt,name=state,proto3,enum=owlsfu.v1.EdgeStatus_State" json:"state,omitempty"`
-	RttMs         float64                `protobuf:"fixed64,6,opt,name=rtt_ms,json=rttMs,proto3" json:"rtt_ms,omitempty"`
-	LossPct       float64                `protobuf:"fixed64,7,opt,name=loss_pct,json=lossPct,proto3" json:"loss_pct,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	RoomId       string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
+	Epoch        uint64                 `protobuf:"varint,2,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	ParentNodeId string                 `protobuf:"bytes,3,opt,name=parent_node_id,json=parentNodeId,proto3" json:"parent_node_id,omitempty"`
+	ChildNodeId  string                 `protobuf:"bytes,4,opt,name=child_node_id,json=childNodeId,proto3" json:"child_node_id,omitempty"`
+	State        EdgeStatus_State       `protobuf:"varint,5,opt,name=state,proto3,enum=owlsfu.v1.EdgeStatus_State" json:"state,omitempty"`
+	RttMs        float64                `protobuf:"fixed64,6,opt,name=rtt_ms,json=rttMs,proto3" json:"rtt_ms,omitempty"`
+	LossPct      float64                `protobuf:"fixed64,7,opt,name=loss_pct,json=lossPct,proto3" json:"loss_pct,omitempty"`
+	// 累计 RTP 字节（本端视角；拓扑面板差分得 bps）。
+	// parent 上报时：bytes_tx = parent→child（down），bytes_rx = child→parent（up）。
+	BytesTx uint64 `protobuf:"varint,8,opt,name=bytes_tx,json=bytesTx,proto3" json:"bytes_tx,omitempty"`
+	BytesRx uint64 `protobuf:"varint,9,opt,name=bytes_rx,json=bytesRx,proto3" json:"bytes_rx,omitempty"`
+	// 媒体传输路径（由 ICE 选中候选对推断）：PATH_TYPE_LAN / WAN / UNKNOWN。
+	PathType          EdgeStatus_PathType `protobuf:"varint,10,opt,name=path_type,json=pathType,proto3,enum=owlsfu.v1.EdgeStatus_PathType" json:"path_type,omitempty"`
+	LocalCandidateIp  string              `protobuf:"bytes,11,opt,name=local_candidate_ip,json=localCandidateIp,proto3" json:"local_candidate_ip,omitempty"`    // 本端选中候选 IP（可空）
+	RemoteCandidateIp string              `protobuf:"bytes,12,opt,name=remote_candidate_ip,json=remoteCandidateIp,proto3" json:"remote_candidate_ip,omitempty"` // 对端选中候选 IP（可空）
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *EdgeStatus) Reset() {
@@ -783,6 +849,41 @@ func (x *EdgeStatus) GetLossPct() float64 {
 		return x.LossPct
 	}
 	return 0
+}
+
+func (x *EdgeStatus) GetBytesTx() uint64 {
+	if x != nil {
+		return x.BytesTx
+	}
+	return 0
+}
+
+func (x *EdgeStatus) GetBytesRx() uint64 {
+	if x != nil {
+		return x.BytesRx
+	}
+	return 0
+}
+
+func (x *EdgeStatus) GetPathType() EdgeStatus_PathType {
+	if x != nil {
+		return x.PathType
+	}
+	return EdgeStatus_PATH_TYPE_UNSPECIFIED
+}
+
+func (x *EdgeStatus) GetLocalCandidateIp() string {
+	if x != nil {
+		return x.LocalCandidateIp
+	}
+	return ""
+}
+
+func (x *EdgeStatus) GetRemoteCandidateIp() string {
+	if x != nil {
+		return x.RemoteCandidateIp
+	}
+	return ""
 }
 
 type CommandAck struct {
@@ -1027,6 +1128,7 @@ type Command struct {
 	//	*Command_SetCascadeEdges
 	//	*Command_MigrateParticipants
 	//	*Command_Drain
+	//	*Command_UpdateBinary
 	Payload       isCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1157,6 +1259,15 @@ func (x *Command) GetDrain() *Drain {
 	return nil
 }
 
+func (x *Command) GetUpdateBinary() *UpdateBinary {
+	if x != nil {
+		if x, ok := x.Payload.(*Command_UpdateBinary); ok {
+			return x.UpdateBinary
+		}
+	}
+	return nil
+}
+
 type isCommand_Payload interface {
 	isCommand_Payload()
 }
@@ -1197,6 +1308,11 @@ type Command_Drain struct {
 	Drain *Drain `protobuf:"bytes,10,opt,name=drain,proto3,oneof"`
 }
 
+type Command_UpdateBinary struct {
+	// 远程热更 SFU 二进制：节点下载 → 校验 → 原子替换 → 自重启。
+	UpdateBinary *UpdateBinary `protobuf:"bytes,11,opt,name=update_binary,json=updateBinary,proto3,oneof"`
+}
+
 func (*Command_EnsureLogicalRoom) isCommand_Payload() {}
 
 func (*Command_CloseLogicalRoom) isCommand_Payload() {}
@@ -1215,6 +1331,78 @@ func (*Command_MigrateParticipants) isCommand_Payload() {}
 
 func (*Command_Drain) isCommand_Payload() {}
 
+func (*Command_UpdateBinary) isCommand_Payload() {}
+
+// UpdateBinary 远程升级节点程序（运维从管理后台下发）。
+// 节点侧：若当前版本已等于 target_version 且 force=false，直接 Ack 成功跳过下载。
+type UpdateBinary struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TargetVersion string                 `protobuf:"bytes,1,opt,name=target_version,json=targetVersion,proto3" json:"target_version,omitempty"` // 期望版本号，写入新二进制后 Register 会上报
+	DownloadUrl   string                 `protobuf:"bytes,2,opt,name=download_url,json=downloadUrl,proto3" json:"download_url,omitempty"`       // HTTPS/HTTP 可执行文件下载地址
+	Sha256Hex     string                 `protobuf:"bytes,3,opt,name=sha256_hex,json=sha256Hex,proto3" json:"sha256_hex,omitempty"`             // 小写/大写 hex 均可；空则跳过校验（不推荐）
+	Force         bool                   `protobuf:"varint,4,opt,name=force,proto3" json:"force,omitempty"`                                     // true 时即使版本相同也强制重装
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateBinary) Reset() {
+	*x = UpdateBinary{}
+	mi := &file_owlsfu_v1_control_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateBinary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateBinary) ProtoMessage() {}
+
+func (x *UpdateBinary) ProtoReflect() protoreflect.Message {
+	mi := &file_owlsfu_v1_control_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateBinary.ProtoReflect.Descriptor instead.
+func (*UpdateBinary) Descriptor() ([]byte, []int) {
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *UpdateBinary) GetTargetVersion() string {
+	if x != nil {
+		return x.TargetVersion
+	}
+	return ""
+}
+
+func (x *UpdateBinary) GetDownloadUrl() string {
+	if x != nil {
+		return x.DownloadUrl
+	}
+	return ""
+}
+
+func (x *UpdateBinary) GetSha256Hex() string {
+	if x != nil {
+		return x.Sha256Hex
+	}
+	return ""
+}
+
+func (x *UpdateBinary) GetForce() bool {
+	if x != nil {
+		return x.Force
+	}
+	return false
+}
+
 type EnsureLogicalRoom struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RoomId        string                 `protobuf:"bytes,1,opt,name=room_id,json=roomId,proto3" json:"room_id,omitempty"`
@@ -1224,7 +1412,7 @@ type EnsureLogicalRoom struct {
 
 func (x *EnsureLogicalRoom) Reset() {
 	*x = EnsureLogicalRoom{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[11]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1236,7 +1424,7 @@ func (x *EnsureLogicalRoom) String() string {
 func (*EnsureLogicalRoom) ProtoMessage() {}
 
 func (x *EnsureLogicalRoom) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[11]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +1437,7 @@ func (x *EnsureLogicalRoom) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EnsureLogicalRoom.ProtoReflect.Descriptor instead.
 func (*EnsureLogicalRoom) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{11}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *EnsureLogicalRoom) GetRoomId() string {
@@ -1268,7 +1456,7 @@ type CloseLogicalRoom struct {
 
 func (x *CloseLogicalRoom) Reset() {
 	*x = CloseLogicalRoom{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[12]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1280,7 +1468,7 @@ func (x *CloseLogicalRoom) String() string {
 func (*CloseLogicalRoom) ProtoMessage() {}
 
 func (x *CloseLogicalRoom) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[12]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1293,7 +1481,7 @@ func (x *CloseLogicalRoom) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CloseLogicalRoom.ProtoReflect.Descriptor instead.
 func (*CloseLogicalRoom) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{12}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CloseLogicalRoom) GetRoomId() string {
@@ -1315,7 +1503,7 @@ type DisconnectUser struct {
 
 func (x *DisconnectUser) Reset() {
 	*x = DisconnectUser{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[13]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1327,7 +1515,7 @@ func (x *DisconnectUser) String() string {
 func (*DisconnectUser) ProtoMessage() {}
 
 func (x *DisconnectUser) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[13]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1340,7 +1528,7 @@ func (x *DisconnectUser) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DisconnectUser.ProtoReflect.Descriptor instead.
 func (*DisconnectUser) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{13}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DisconnectUser) GetRoomId() string {
@@ -1381,7 +1569,7 @@ type RevokeSession struct {
 
 func (x *RevokeSession) Reset() {
 	*x = RevokeSession{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[14]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1393,7 +1581,7 @@ func (x *RevokeSession) String() string {
 func (*RevokeSession) ProtoMessage() {}
 
 func (x *RevokeSession) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[14]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1406,7 +1594,7 @@ func (x *RevokeSession) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RevokeSession.ProtoReflect.Descriptor instead.
 func (*RevokeSession) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{14}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *RevokeSession) GetSessionId() string {
@@ -1434,7 +1622,7 @@ type UpdateParticipantCaps struct {
 
 func (x *UpdateParticipantCaps) Reset() {
 	*x = UpdateParticipantCaps{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[15]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1446,7 +1634,7 @@ func (x *UpdateParticipantCaps) String() string {
 func (*UpdateParticipantCaps) ProtoMessage() {}
 
 func (x *UpdateParticipantCaps) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[15]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1459,7 +1647,7 @@ func (x *UpdateParticipantCaps) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateParticipantCaps.ProtoReflect.Descriptor instead.
 func (*UpdateParticipantCaps) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{15}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UpdateParticipantCaps) GetRoomId() string {
@@ -1495,7 +1683,7 @@ type SetAnchorLease struct {
 
 func (x *SetAnchorLease) Reset() {
 	*x = SetAnchorLease{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[16]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1507,7 +1695,7 @@ func (x *SetAnchorLease) String() string {
 func (*SetAnchorLease) ProtoMessage() {}
 
 func (x *SetAnchorLease) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[16]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1520,7 +1708,7 @@ func (x *SetAnchorLease) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetAnchorLease.ProtoReflect.Descriptor instead.
 func (*SetAnchorLease) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{16}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *SetAnchorLease) GetRoomId() string {
@@ -1562,7 +1750,7 @@ type SetCascadeEdges struct {
 
 func (x *SetCascadeEdges) Reset() {
 	*x = SetCascadeEdges{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[17]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1574,7 +1762,7 @@ func (x *SetCascadeEdges) String() string {
 func (*SetCascadeEdges) ProtoMessage() {}
 
 func (x *SetCascadeEdges) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[17]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1587,7 +1775,7 @@ func (x *SetCascadeEdges) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetCascadeEdges.ProtoReflect.Descriptor instead.
 func (*SetCascadeEdges) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{17}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *SetCascadeEdges) GetRoomId() string {
@@ -1623,7 +1811,7 @@ type CascadeEdge struct {
 
 func (x *CascadeEdge) Reset() {
 	*x = CascadeEdge{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[18]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1635,7 +1823,7 @@ func (x *CascadeEdge) String() string {
 func (*CascadeEdge) ProtoMessage() {}
 
 func (x *CascadeEdge) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[18]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1648,7 +1836,7 @@ func (x *CascadeEdge) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CascadeEdge.ProtoReflect.Descriptor instead.
 func (*CascadeEdge) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{18}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *CascadeEdge) GetParentNodeId() string {
@@ -1698,7 +1886,7 @@ type MigrateParticipants struct {
 
 func (x *MigrateParticipants) Reset() {
 	*x = MigrateParticipants{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[19]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1710,7 +1898,7 @@ func (x *MigrateParticipants) String() string {
 func (*MigrateParticipants) ProtoMessage() {}
 
 func (x *MigrateParticipants) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[19]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1723,7 +1911,7 @@ func (x *MigrateParticipants) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MigrateParticipants.ProtoReflect.Descriptor instead.
 func (*MigrateParticipants) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{19}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *MigrateParticipants) GetMigrationId() string {
@@ -1772,7 +1960,7 @@ type Drain struct {
 
 func (x *Drain) Reset() {
 	*x = Drain{}
-	mi := &file_owlsfu_v1_control_proto_msgTypes[20]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1784,7 +1972,7 @@ func (x *Drain) String() string {
 func (*Drain) ProtoMessage() {}
 
 func (x *Drain) ProtoReflect() protoreflect.Message {
-	mi := &file_owlsfu_v1_control_proto_msgTypes[20]
+	mi := &file_owlsfu_v1_control_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1797,7 +1985,7 @@ func (x *Drain) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Drain.ProtoReflect.Descriptor instead.
 func (*Drain) Descriptor() ([]byte, []int) {
-	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{20}
+	return file_owlsfu_v1_control_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *Drain) GetDeadlineUnixMs() int64 {
@@ -1840,10 +2028,11 @@ const file_owlsfu_v1_control_proto_rawDesc = "" +
 	"\awss_url\x18\x01 \x01(\tR\x06wssUrl\x12$\n" +
 	"\x0emedia_udp_port\x18\x02 \x01(\rR\fmediaUdpPort\x12\x1b\n" +
 	"\tmedia_ips\x18\x03 \x03(\tR\bmediaIps\x12)\n" +
-	"\x10cascade_endpoint\x18\x04 \x01(\tR\x0fcascadeEndpoint\"Y\n" +
+	"\x10cascade_endpoint\x18\x04 \x01(\tR\x0fcascadeEndpoint\"|\n" +
 	"\tHeartbeat\x123\n" +
 	"\bcapacity\x18\x01 \x01(\v2\x17.owlsfu.v1.NodeCapacityR\bcapacity\x12\x17\n" +
-	"\aunix_ms\x18\x02 \x01(\x03R\x06unixMs\"\x9d\x03\n" +
+	"\aunix_ms\x18\x02 \x01(\x03R\x06unixMs\x12!\n" +
+	"\fnode_version\x18\x03 \x01(\tR\vnodeVersion\"\x9d\x03\n" +
 	"\tRoomEvent\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x122\n" +
 	"\x04type\x18\x02 \x01(\x0e2\x1e.owlsfu.v1.RoomEvent.EventTypeR\x04type\x12\x1d\n" +
@@ -1858,7 +2047,7 @@ const file_owlsfu_v1_control_proto_rawDesc = "" +
 	"\x1bEVENT_TYPE_PARTICIPANT_LEFT\x10\x02\x12%\n" +
 	"!EVENT_TYPE_PARTICIPANT_ICE_FAILED\x10\x03\x12\"\n" +
 	"\x1eEVENT_TYPE_SCREEN_TRACK_ACTIVE\x10\x04\x12!\n" +
-	"\x1dEVENT_TYPE_SCREEN_TRACK_ENDED\x10\x05\"\xb2\x02\n" +
+	"\x1dEVENT_TYPE_SCREEN_TRACK_ENDED\x10\x05\"\xd0\x04\n" +
 	"\n" +
 	"EdgeStatus\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\x12\x14\n" +
@@ -1867,11 +2056,21 @@ const file_owlsfu_v1_control_proto_rawDesc = "" +
 	"\rchild_node_id\x18\x04 \x01(\tR\vchildNodeId\x121\n" +
 	"\x05state\x18\x05 \x01(\x0e2\x1b.owlsfu.v1.EdgeStatus.StateR\x05state\x12\x15\n" +
 	"\x06rtt_ms\x18\x06 \x01(\x01R\x05rttMs\x12\x19\n" +
-	"\bloss_pct\x18\a \x01(\x01R\alossPct\"F\n" +
+	"\bloss_pct\x18\a \x01(\x01R\alossPct\x12\x19\n" +
+	"\bbytes_tx\x18\b \x01(\x04R\abytesTx\x12\x19\n" +
+	"\bbytes_rx\x18\t \x01(\x04R\abytesRx\x12;\n" +
+	"\tpath_type\x18\n" +
+	" \x01(\x0e2\x1e.owlsfu.v1.EdgeStatus.PathTypeR\bpathType\x12,\n" +
+	"\x12local_candidate_ip\x18\v \x01(\tR\x10localCandidateIp\x12.\n" +
+	"\x13remote_candidate_ip\x18\f \x01(\tR\x11remoteCandidateIp\"F\n" +
 	"\x05State\x12\x15\n" +
 	"\x11STATE_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSTATE_EDGE_UP\x10\x01\x12\x13\n" +
-	"\x0fSTATE_EDGE_DOWN\x10\x02\"\x7f\n" +
+	"\x0fSTATE_EDGE_DOWN\x10\x02\"K\n" +
+	"\bPathType\x12\x19\n" +
+	"\x15PATH_TYPE_UNSPECIFIED\x10\x00\x12\x11\n" +
+	"\rPATH_TYPE_LAN\x10\x01\x12\x11\n" +
+	"\rPATH_TYPE_WAN\x10\x02\"\x7f\n" +
 	"\n" +
 	"CommandAck\x12\x1d\n" +
 	"\n" +
@@ -1889,7 +2088,7 @@ const file_owlsfu_v1_control_proto_rawDesc = "" +
 	"\x15heartbeat_interval_ms\x18\x02 \x01(\rR\x13heartbeatIntervalMs\x12B\n" +
 	"\x10media_token_keys\x18\x03 \x03(\v2\x18.owlsfu.v1.MediaTokenKeyR\x0emediaTokenKeys\x12(\n" +
 	"\x10audit_ingest_url\x18\x04 \x01(\tR\x0eauditIngestUrl\x12,\n" +
-	"\x12audit_ingest_token\x18\x05 \x01(\tR\x10auditIngestToken\"\xc5\x05\n" +
+	"\x12audit_ingest_token\x18\x05 \x01(\tR\x10auditIngestToken\"\x85\x06\n" +
 	"\aCommand\x12\x1d\n" +
 	"\n" +
 	"command_id\x18\x01 \x01(\tR\tcommandId\x12N\n" +
@@ -1902,8 +2101,15 @@ const file_owlsfu_v1_control_proto_rawDesc = "" +
 	"\x11set_cascade_edges\x18\b \x01(\v2\x1a.owlsfu.v1.SetCascadeEdgesH\x00R\x0fsetCascadeEdges\x12S\n" +
 	"\x14migrate_participants\x18\t \x01(\v2\x1e.owlsfu.v1.MigrateParticipantsH\x00R\x13migrateParticipants\x12(\n" +
 	"\x05drain\x18\n" +
-	" \x01(\v2\x10.owlsfu.v1.DrainH\x00R\x05drainB\t\n" +
-	"\apayload\",\n" +
+	" \x01(\v2\x10.owlsfu.v1.DrainH\x00R\x05drain\x12>\n" +
+	"\rupdate_binary\x18\v \x01(\v2\x17.owlsfu.v1.UpdateBinaryH\x00R\fupdateBinaryB\t\n" +
+	"\apayload\"\x8d\x01\n" +
+	"\fUpdateBinary\x12%\n" +
+	"\x0etarget_version\x18\x01 \x01(\tR\rtargetVersion\x12!\n" +
+	"\fdownload_url\x18\x02 \x01(\tR\vdownloadUrl\x12\x1d\n" +
+	"\n" +
+	"sha256_hex\x18\x03 \x01(\tR\tsha256Hex\x12\x14\n" +
+	"\x05force\x18\x04 \x01(\bR\x05force\",\n" +
 	"\x11EnsureLogicalRoom\x12\x17\n" +
 	"\aroom_id\x18\x01 \x01(\tR\x06roomId\"+\n" +
 	"\x10CloseLogicalRoom\x12\x17\n" +
@@ -1977,73 +2183,77 @@ func file_owlsfu_v1_control_proto_rawDescGZIP() []byte {
 	return file_owlsfu_v1_control_proto_rawDescData
 }
 
-var file_owlsfu_v1_control_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_owlsfu_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_owlsfu_v1_control_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_owlsfu_v1_control_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
 var file_owlsfu_v1_control_proto_goTypes = []any{
 	(RoomEvent_EventType)(0),       // 0: owlsfu.v1.RoomEvent.EventType
 	(EdgeStatus_State)(0),          // 1: owlsfu.v1.EdgeStatus.State
-	(DisconnectUser_Reason)(0),     // 2: owlsfu.v1.DisconnectUser.Reason
-	(MigrateParticipants_Phase)(0), // 3: owlsfu.v1.MigrateParticipants.Phase
-	(*NodeMessage)(nil),            // 4: owlsfu.v1.NodeMessage
-	(*DrainRequest)(nil),           // 5: owlsfu.v1.DrainRequest
-	(*Register)(nil),               // 6: owlsfu.v1.Register
-	(*NodeAdvertise)(nil),          // 7: owlsfu.v1.NodeAdvertise
-	(*Heartbeat)(nil),              // 8: owlsfu.v1.Heartbeat
-	(*RoomEvent)(nil),              // 9: owlsfu.v1.RoomEvent
-	(*EdgeStatus)(nil),             // 10: owlsfu.v1.EdgeStatus
-	(*CommandAck)(nil),             // 11: owlsfu.v1.CommandAck
-	(*ServerMessage)(nil),          // 12: owlsfu.v1.ServerMessage
-	(*RegisterAck)(nil),            // 13: owlsfu.v1.RegisterAck
-	(*Command)(nil),                // 14: owlsfu.v1.Command
-	(*EnsureLogicalRoom)(nil),      // 15: owlsfu.v1.EnsureLogicalRoom
-	(*CloseLogicalRoom)(nil),       // 16: owlsfu.v1.CloseLogicalRoom
-	(*DisconnectUser)(nil),         // 17: owlsfu.v1.DisconnectUser
-	(*RevokeSession)(nil),          // 18: owlsfu.v1.RevokeSession
-	(*UpdateParticipantCaps)(nil),  // 19: owlsfu.v1.UpdateParticipantCaps
-	(*SetAnchorLease)(nil),         // 20: owlsfu.v1.SetAnchorLease
-	(*SetCascadeEdges)(nil),        // 21: owlsfu.v1.SetCascadeEdges
-	(*CascadeEdge)(nil),            // 22: owlsfu.v1.CascadeEdge
-	(*MigrateParticipants)(nil),    // 23: owlsfu.v1.MigrateParticipants
-	(*Drain)(nil),                  // 24: owlsfu.v1.Drain
-	(*NodeCapacity)(nil),           // 25: owlsfu.v1.NodeCapacity
-	(*MediaTokenKey)(nil),          // 26: owlsfu.v1.MediaTokenKey
-	(Cap)(0),                       // 27: owlsfu.v1.Cap
+	(EdgeStatus_PathType)(0),       // 2: owlsfu.v1.EdgeStatus.PathType
+	(DisconnectUser_Reason)(0),     // 3: owlsfu.v1.DisconnectUser.Reason
+	(MigrateParticipants_Phase)(0), // 4: owlsfu.v1.MigrateParticipants.Phase
+	(*NodeMessage)(nil),            // 5: owlsfu.v1.NodeMessage
+	(*DrainRequest)(nil),           // 6: owlsfu.v1.DrainRequest
+	(*Register)(nil),               // 7: owlsfu.v1.Register
+	(*NodeAdvertise)(nil),          // 8: owlsfu.v1.NodeAdvertise
+	(*Heartbeat)(nil),              // 9: owlsfu.v1.Heartbeat
+	(*RoomEvent)(nil),              // 10: owlsfu.v1.RoomEvent
+	(*EdgeStatus)(nil),             // 11: owlsfu.v1.EdgeStatus
+	(*CommandAck)(nil),             // 12: owlsfu.v1.CommandAck
+	(*ServerMessage)(nil),          // 13: owlsfu.v1.ServerMessage
+	(*RegisterAck)(nil),            // 14: owlsfu.v1.RegisterAck
+	(*Command)(nil),                // 15: owlsfu.v1.Command
+	(*UpdateBinary)(nil),           // 16: owlsfu.v1.UpdateBinary
+	(*EnsureLogicalRoom)(nil),      // 17: owlsfu.v1.EnsureLogicalRoom
+	(*CloseLogicalRoom)(nil),       // 18: owlsfu.v1.CloseLogicalRoom
+	(*DisconnectUser)(nil),         // 19: owlsfu.v1.DisconnectUser
+	(*RevokeSession)(nil),          // 20: owlsfu.v1.RevokeSession
+	(*UpdateParticipantCaps)(nil),  // 21: owlsfu.v1.UpdateParticipantCaps
+	(*SetAnchorLease)(nil),         // 22: owlsfu.v1.SetAnchorLease
+	(*SetCascadeEdges)(nil),        // 23: owlsfu.v1.SetCascadeEdges
+	(*CascadeEdge)(nil),            // 24: owlsfu.v1.CascadeEdge
+	(*MigrateParticipants)(nil),    // 25: owlsfu.v1.MigrateParticipants
+	(*Drain)(nil),                  // 26: owlsfu.v1.Drain
+	(*NodeCapacity)(nil),           // 27: owlsfu.v1.NodeCapacity
+	(*MediaTokenKey)(nil),          // 28: owlsfu.v1.MediaTokenKey
+	(Cap)(0),                       // 29: owlsfu.v1.Cap
 }
 var file_owlsfu_v1_control_proto_depIdxs = []int32{
-	6,  // 0: owlsfu.v1.NodeMessage.register:type_name -> owlsfu.v1.Register
-	8,  // 1: owlsfu.v1.NodeMessage.heartbeat:type_name -> owlsfu.v1.Heartbeat
-	9,  // 2: owlsfu.v1.NodeMessage.room_event:type_name -> owlsfu.v1.RoomEvent
-	10, // 3: owlsfu.v1.NodeMessage.edge_status:type_name -> owlsfu.v1.EdgeStatus
-	11, // 4: owlsfu.v1.NodeMessage.command_ack:type_name -> owlsfu.v1.CommandAck
-	5,  // 5: owlsfu.v1.NodeMessage.drain_request:type_name -> owlsfu.v1.DrainRequest
-	7,  // 6: owlsfu.v1.Register.advertise:type_name -> owlsfu.v1.NodeAdvertise
-	25, // 7: owlsfu.v1.Register.capacity:type_name -> owlsfu.v1.NodeCapacity
-	25, // 8: owlsfu.v1.Heartbeat.capacity:type_name -> owlsfu.v1.NodeCapacity
+	7,  // 0: owlsfu.v1.NodeMessage.register:type_name -> owlsfu.v1.Register
+	9,  // 1: owlsfu.v1.NodeMessage.heartbeat:type_name -> owlsfu.v1.Heartbeat
+	10, // 2: owlsfu.v1.NodeMessage.room_event:type_name -> owlsfu.v1.RoomEvent
+	11, // 3: owlsfu.v1.NodeMessage.edge_status:type_name -> owlsfu.v1.EdgeStatus
+	12, // 4: owlsfu.v1.NodeMessage.command_ack:type_name -> owlsfu.v1.CommandAck
+	6,  // 5: owlsfu.v1.NodeMessage.drain_request:type_name -> owlsfu.v1.DrainRequest
+	8,  // 6: owlsfu.v1.Register.advertise:type_name -> owlsfu.v1.NodeAdvertise
+	27, // 7: owlsfu.v1.Register.capacity:type_name -> owlsfu.v1.NodeCapacity
+	27, // 8: owlsfu.v1.Heartbeat.capacity:type_name -> owlsfu.v1.NodeCapacity
 	0,  // 9: owlsfu.v1.RoomEvent.type:type_name -> owlsfu.v1.RoomEvent.EventType
 	1,  // 10: owlsfu.v1.EdgeStatus.state:type_name -> owlsfu.v1.EdgeStatus.State
-	13, // 11: owlsfu.v1.ServerMessage.register_ack:type_name -> owlsfu.v1.RegisterAck
-	14, // 12: owlsfu.v1.ServerMessage.command:type_name -> owlsfu.v1.Command
-	26, // 13: owlsfu.v1.RegisterAck.media_token_keys:type_name -> owlsfu.v1.MediaTokenKey
-	15, // 14: owlsfu.v1.Command.ensure_logical_room:type_name -> owlsfu.v1.EnsureLogicalRoom
-	16, // 15: owlsfu.v1.Command.close_logical_room:type_name -> owlsfu.v1.CloseLogicalRoom
-	17, // 16: owlsfu.v1.Command.disconnect_user:type_name -> owlsfu.v1.DisconnectUser
-	18, // 17: owlsfu.v1.Command.revoke_session:type_name -> owlsfu.v1.RevokeSession
-	19, // 18: owlsfu.v1.Command.update_participant_caps:type_name -> owlsfu.v1.UpdateParticipantCaps
-	20, // 19: owlsfu.v1.Command.set_anchor_lease:type_name -> owlsfu.v1.SetAnchorLease
-	21, // 20: owlsfu.v1.Command.set_cascade_edges:type_name -> owlsfu.v1.SetCascadeEdges
-	23, // 21: owlsfu.v1.Command.migrate_participants:type_name -> owlsfu.v1.MigrateParticipants
-	24, // 22: owlsfu.v1.Command.drain:type_name -> owlsfu.v1.Drain
-	2,  // 23: owlsfu.v1.DisconnectUser.reason:type_name -> owlsfu.v1.DisconnectUser.Reason
-	27, // 24: owlsfu.v1.UpdateParticipantCaps.caps:type_name -> owlsfu.v1.Cap
-	22, // 25: owlsfu.v1.SetCascadeEdges.edges:type_name -> owlsfu.v1.CascadeEdge
-	3,  // 26: owlsfu.v1.MigrateParticipants.phase:type_name -> owlsfu.v1.MigrateParticipants.Phase
-	4,  // 27: owlsfu.v1.ControlService.Channel:input_type -> owlsfu.v1.NodeMessage
-	12, // 28: owlsfu.v1.ControlService.Channel:output_type -> owlsfu.v1.ServerMessage
-	28, // [28:29] is the sub-list for method output_type
-	27, // [27:28] is the sub-list for method input_type
-	27, // [27:27] is the sub-list for extension type_name
-	27, // [27:27] is the sub-list for extension extendee
-	0,  // [0:27] is the sub-list for field type_name
+	2,  // 11: owlsfu.v1.EdgeStatus.path_type:type_name -> owlsfu.v1.EdgeStatus.PathType
+	14, // 12: owlsfu.v1.ServerMessage.register_ack:type_name -> owlsfu.v1.RegisterAck
+	15, // 13: owlsfu.v1.ServerMessage.command:type_name -> owlsfu.v1.Command
+	28, // 14: owlsfu.v1.RegisterAck.media_token_keys:type_name -> owlsfu.v1.MediaTokenKey
+	17, // 15: owlsfu.v1.Command.ensure_logical_room:type_name -> owlsfu.v1.EnsureLogicalRoom
+	18, // 16: owlsfu.v1.Command.close_logical_room:type_name -> owlsfu.v1.CloseLogicalRoom
+	19, // 17: owlsfu.v1.Command.disconnect_user:type_name -> owlsfu.v1.DisconnectUser
+	20, // 18: owlsfu.v1.Command.revoke_session:type_name -> owlsfu.v1.RevokeSession
+	21, // 19: owlsfu.v1.Command.update_participant_caps:type_name -> owlsfu.v1.UpdateParticipantCaps
+	22, // 20: owlsfu.v1.Command.set_anchor_lease:type_name -> owlsfu.v1.SetAnchorLease
+	23, // 21: owlsfu.v1.Command.set_cascade_edges:type_name -> owlsfu.v1.SetCascadeEdges
+	25, // 22: owlsfu.v1.Command.migrate_participants:type_name -> owlsfu.v1.MigrateParticipants
+	26, // 23: owlsfu.v1.Command.drain:type_name -> owlsfu.v1.Drain
+	16, // 24: owlsfu.v1.Command.update_binary:type_name -> owlsfu.v1.UpdateBinary
+	3,  // 25: owlsfu.v1.DisconnectUser.reason:type_name -> owlsfu.v1.DisconnectUser.Reason
+	29, // 26: owlsfu.v1.UpdateParticipantCaps.caps:type_name -> owlsfu.v1.Cap
+	24, // 27: owlsfu.v1.SetCascadeEdges.edges:type_name -> owlsfu.v1.CascadeEdge
+	4,  // 28: owlsfu.v1.MigrateParticipants.phase:type_name -> owlsfu.v1.MigrateParticipants.Phase
+	5,  // 29: owlsfu.v1.ControlService.Channel:input_type -> owlsfu.v1.NodeMessage
+	13, // 30: owlsfu.v1.ControlService.Channel:output_type -> owlsfu.v1.ServerMessage
+	30, // [30:31] is the sub-list for method output_type
+	29, // [29:30] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_owlsfu_v1_control_proto_init() }
@@ -2074,14 +2284,15 @@ func file_owlsfu_v1_control_proto_init() {
 		(*Command_SetCascadeEdges)(nil),
 		(*Command_MigrateParticipants)(nil),
 		(*Command_Drain)(nil),
+		(*Command_UpdateBinary)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_owlsfu_v1_control_proto_rawDesc), len(file_owlsfu_v1_control_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   21,
+			NumEnums:      5,
+			NumMessages:   22,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
