@@ -14,7 +14,8 @@ var OpusCodec = webrtc.RTPCodecCapability{
 	MimeType:    webrtc.MimeTypeOpus,
 	ClockRate:   48000,
 	Channels:    2,
-	SDPFmtpLine: "minptime=10;useinbandfec=1",
+	// stereo=1 / sprop-stereo=1：协商允许双声道 Opus（端侧按采集声道实际编码；纯转发）
+	SDPFmtpLine: "minptime=10;useinbandfec=1;stereo=1;sprop-stereo=1",
 }
 
 // Engine 持有共享 UDPMux 与 webrtc.API，负责创建 PeerConnection。
