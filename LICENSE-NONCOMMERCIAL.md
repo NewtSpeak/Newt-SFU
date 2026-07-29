@@ -1,4 +1,4 @@
-# Owl-SFU Noncommercial License (Forced Open Source)
+# Newt-SFU Noncommercial License (Forced Open Source)
 
 This file grants free rights **only for noncommercial purposes**, with an additional
 **forced open-source (Share-Alike / source disclosure)** obligation.
@@ -7,8 +7,8 @@ Base license: **PolyForm Noncommercial License 1.0.0**
 Additional terms: **Section A (Forced Open Source)** below supersedes the base license
 where they conflict regarding distribution of modifications and network provision.
 
-Required Notice: Copyright (c) 2026 OwlSpeak and contributors  
-https://github.com/OwlSpeak/Owl-SFU
+Required Notice: Copyright (c) 2026 NewtSpeak and contributors  
+https://github.com/NewtSpeak/Newt-SFU
 
 Commercial use is **not** granted by this file. See `LICENSE-COMMERCIAL.md`.
 

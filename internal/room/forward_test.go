@@ -3,7 +3,7 @@ package room
 import (
 	"testing"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/auth"
 )
 
 func caps(list ...string) auth.CapSet { return auth.NewCapSet(list) }

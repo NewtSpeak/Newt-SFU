@@ -3,7 +3,7 @@ package control
 import (
 	"sync"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
 // ackCache 为 command_id 幂等去重窗口：

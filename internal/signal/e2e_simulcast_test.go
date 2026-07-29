@@ -17,7 +17,7 @@ import (
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
 
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // 层标记（VP8 payload descriptor 语义无关：SFU 纯转发不解码）。

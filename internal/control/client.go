@@ -14,11 +14,11 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/stats"
-	"github.com/owlspeak/owl-sfu/internal/update"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/stats"
+	"github.com/newtspeak/newt-sfu/internal/update"
 )
 
 const (

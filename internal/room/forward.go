@@ -8,7 +8,7 @@ import (
 
 	"github.com/pion/rtp"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/auth"
 )
 
 // speakingLevelThreshold：RFC 6464 audio level（0=最大声，127=静音），

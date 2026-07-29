@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/owlspeak/owl-sfu/internal/room"
+	"github.com/newtspeak/newt-sfu/internal/room"
 )
 
 func msFromNow(d time.Duration) int64 { return time.Now().Add(d).UnixMilli() }

@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/room"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
-	"github.com/owlspeak/owl-sfu/internal/stats"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/room"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/stats"
 )
 
 // fakeMessenger 记录 closed 帧原因码的信令桩。

@@ -13,8 +13,8 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // signTokenCaps 与 signToken 相同但可指定 caps（屏幕共享用例需要 publish_screen）。

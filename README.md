@@ -1,7 +1,7 @@
-# Owl-SFU
+# Newt-SFU
 
-OwlSpeak **媒体面**节点：基于 Go + [Pion](https://github.com/pion/webrtc) 的自研 SFU。  
-只做 **选路转发**（不转码、不混流）；业务权限与调度权威在 [Owl-Server](https://github.com/OwlSpeak/Owl-Server)。
+NewtSpeak **媒体面**节点：基于 Go + [Pion](https://github.com/pion/webrtc) 的自研 SFU。  
+只做 **选路转发**（不转码、不混流）；业务权限与调度权威在 [Newt-Server](https://github.com/NewtSpeak/Newt-Server)。
 
 ```text
 Desktop ──WSS 信令──► owl-sfu :8443（常经 Caddy 终结 TLS）
@@ -26,7 +26,7 @@ owl-sfu ──mTLS gRPC──► Server :9443（主动外连，管理面不反�
 ## 仓库结构
 
 ```text
-Owl-SFU/
+Newt-SFU/
 ├── cmd/owl-sfu/       # 主进程
 ├── cmd/loadbot/       # headless Pion 联调 / 压测客户端
 ├── internal/
@@ -39,7 +39,7 @@ Owl-SFU/
 │   ├── cascade/       # 级联
 │   ├── migrate/       # 热迁移执行
 │   └── … 
-├── gen/owlsfu/v1/     # gRPC 生成码（proto 源在 Owl-Server）
+├── gen/owlsfu/v1/     # gRPC 生成码（proto 源在 Newt-Server）
 ├── config.example.yaml
 └── Makefile
 ```
@@ -91,18 +91,18 @@ go run ./cmd/loadbot \
 | 文档 | 说明 |
 |------|------|
 | [docs/deploy.md](./docs/deploy.md) | **生产部署**（env / systemd / 防火墙） |
-| [Owl-Server 部署](https://github.com/OwlSpeak/Owl-Server/blob/main/docs/deploy/server.md) | 控制面与 enroll 前置 |
-| [Owl-Server 设计讨论](https://github.com/OwlSpeak/Owl-Server/tree/main/docs/设计讨论) | 选型、级联、热迁移、容量 |
-| [Owl-Server 协议](https://github.com/OwlSpeak/Owl-Server/tree/main/docs/协议) | 信令与 token |
-| [Owl-Server proto](https://github.com/OwlSpeak/Owl-Server/tree/main/proto) | 控制面 protobuf 权威源 |
+| [Newt-Server 部署](https://github.com/NewtSpeak/Newt-Server/blob/main/docs/deploy/server.md) | 控制面与 enroll 前置 |
+| [Newt-Server 设计讨论](https://github.com/NewtSpeak/Newt-Server/tree/main/docs/设计讨论) | 选型、级联、热迁移、容量 |
+| [Newt-Server 协议](https://github.com/NewtSpeak/Newt-Server/tree/main/docs/协议) | 信令与 token |
+| [Newt-Server proto](https://github.com/NewtSpeak/Newt-Server/tree/main/proto) | 控制面 protobuf 权威源 |
 
 ## 相关仓库
 
 | 仓库 | 关系 |
 |------|------|
-| [Owl-Server](https://github.com/OwlSpeak/Owl-Server) | 调度、token、节点生命周期 |
-| [Owl-Desktop](https://github.com/OwlSpeak/Owl-Desktop) | 用户媒体客户端 |
-| [OwlBotSdk](https://github.com/OwlSpeak/OwlBotSdk) | Bot 进房拿 Media Token，媒体层可参考 loadbot |
+| [Newt-Server](https://github.com/NewtSpeak/Newt-Server) | 调度、token、节点生命周期 |
+| [Newt-Desktop](https://github.com/NewtSpeak/Newt-Desktop) | 用户媒体客户端 |
+| [NewtBotSdk](https://github.com/NewtSpeak/NewtBotSdk) | Bot 进房拿 Media Token，媒体层可参考 loadbot |
 
 ## 许可证
 

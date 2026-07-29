@@ -9,8 +9,8 @@ import (
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // speakingInterval 为 speaking 事件聚合推送节流周期。

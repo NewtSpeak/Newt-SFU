@@ -27,12 +27,12 @@ import (
 	"github.com/pion/webrtc/v4"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/room"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
-	"github.com/owlspeak/owl-sfu/internal/stats"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/room"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/stats"
 )
 
 // ---- 测试 CA：模拟 enrollment 签发的节点证书（CN/SAN = node_id）----

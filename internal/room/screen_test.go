@@ -3,7 +3,7 @@ package room
 import (
 	"testing"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/auth"
 )
 
 // TestShouldForwardScreen 屏幕轨转发决策：发布者须持 publish_screen，

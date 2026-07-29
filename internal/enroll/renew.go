@@ -22,7 +22,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
 // CertSource 持有节点证书的当前版本，供 TLS 配置以回调形式取用

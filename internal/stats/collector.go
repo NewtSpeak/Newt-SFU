@@ -9,7 +9,7 @@ import (
 	"github.com/shirou/gopsutil/v4/cpu"
 	"github.com/shirou/gopsutil/v4/mem"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
 // Collector 聚合 users/rooms/CPU/内存/出口带宽。

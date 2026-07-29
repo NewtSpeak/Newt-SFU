@@ -15,8 +15,8 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // CascadeHooks 由 internal/cascade 实现；room 在关键事件后（锁外）回调。

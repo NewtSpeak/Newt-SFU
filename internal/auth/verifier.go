@@ -9,7 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
 // 验签失败原因码，对齐信令协议 §2.4 关闭码。

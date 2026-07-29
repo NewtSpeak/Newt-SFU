@@ -256,7 +256,7 @@ const file_owlsfu_v1_common_proto_rawDesc = "" +
 	"\x12CAP_PUBLISH_SCREEN\x10\x04\x12\x15\n" +
 	"\x11CAP_PUBLISH_VIDEO\x10\x05\x12\x18\n" +
 	"\x14CAP_PRIORITY_SPEAKER\x10\x06B\x95\x01\n" +
-	"\rcom.owlsfu.v1B\vCommonProtoP\x01Z2github.com/owlspeak/owl-sfu/gen/owlsfu/v1;owlsfuv1\xa2\x02\x03OXX\xaa\x02\tOwlsfu.V1\xca\x02\tOwlsfu\\V1\xe2\x02\x15Owlsfu\\V1\\GPBMetadata\xea\x02\n" +
+	"\rcom.owlsfu.v1B\vCommonProtoP\x01Z2github.com/newtspeak/newt-sfu/gen/owlsfu/v1;owlsfuv1\xa2\x02\x03OXX\xaa\x02\tOwlsfu.V1\xca\x02\tOwlsfu\\V1\xe2\x02\x15Owlsfu\\V1\\GPBMetadata\xea\x02\n" +
 	"Owlsfu::V1b\x06proto3"
 
 var (

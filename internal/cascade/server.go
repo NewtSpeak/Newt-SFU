@@ -9,9 +9,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/room"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/room"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 const (

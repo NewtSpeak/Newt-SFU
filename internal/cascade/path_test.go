@@ -3,7 +3,7 @@ package cascade
 import (
 	"testing"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
 func TestClassifyPath(t *testing.T) {

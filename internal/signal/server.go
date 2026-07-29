@@ -11,9 +11,9 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/room"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/room"
 )
 
 const (

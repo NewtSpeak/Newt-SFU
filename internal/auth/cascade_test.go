@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
-// signCascade 模拟 Owl-Server 侧签发（claims 结构对齐 mediatoken.SignCascade）。
+// signCascade 模拟 Newt-Server 侧签发（claims 结构对齐 mediatoken.SignCascade）。
 func signCascade(t *testing.T, priv ed25519.PrivateKey, kid, typ, rid string,
 	epoch uint64, parent, child string, ttl time.Duration) string {
 	t.Helper()

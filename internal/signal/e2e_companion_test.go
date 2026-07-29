@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/owlspeak/owl-sfu/internal/room"
+	"github.com/newtspeak/newt-sfu/internal/room"
 )
 
 // TestE2EScreenAudioCompanion 伴轨主链路：发布 → 事件/转发 → caps 收回一并结束。

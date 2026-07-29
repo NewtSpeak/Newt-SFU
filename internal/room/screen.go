@@ -20,8 +20,8 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // keyframeMinInterval 关键帧请求（PLI/FIR）向发布者转发的最小间隔，

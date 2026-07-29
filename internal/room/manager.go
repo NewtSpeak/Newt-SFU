@@ -10,10 +10,10 @@ import (
 
 	"github.com/pion/webrtc/v4"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
-	"github.com/owlspeak/owl-sfu/internal/stats"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
+	"github.com/newtspeak/newt-sfu/internal/stats"
 )
 
 // Events 为房间事件上报接口（由控制通道客户端实现）。

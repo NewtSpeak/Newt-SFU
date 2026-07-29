@@ -5,7 +5,7 @@ import (
 
 	"github.com/pion/webrtc/v4"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
 )
 
 // selectedPairIPs 从 PC 的 ICE selected candidate pair 取本端/对端 IP。

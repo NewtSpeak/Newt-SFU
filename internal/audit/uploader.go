@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/owlspeak/owl-sfu/internal/room"
+	"github.com/newtspeak/newt-sfu/internal/room"
 )
 
 // Uploader 实现 room.AuditUploader：会话结束后把录音 POST 到主节点 /audit-api/records。
-// 认证走共享密钥（Bearer），与 Owl-Server 的 AUDIT_INGEST_TOKEN 对齐。
+// 认证走共享密钥（Bearer），与 Newt-Server 的 AUDIT_INGEST_TOKEN 对齐。
 type Uploader struct {
 	log       *slog.Logger
 	ingestURL string // 形如 https://server/audit-api/records

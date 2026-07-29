@@ -14,10 +14,10 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/room"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/room"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // cascadeKeyframeMinInterval 屏幕轨 PLI 沿级联回传的每轨节流间隔（与 room 层

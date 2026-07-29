@@ -20,10 +20,10 @@ import (
 	"github.com/pion/webrtc/v4"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
-	owlsfuv1 "github.com/owlspeak/owl-sfu/gen/owlsfu/v1"
-	"github.com/owlspeak/owl-sfu/internal/auth"
-	"github.com/owlspeak/owl-sfu/internal/room"
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	owlsfuv1 "github.com/newtspeak/newt-sfu/gen/owlsfu/v1"
+	"github.com/newtspeak/newt-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/room"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // screenE2EClient 为屏幕共享级联 e2e 客户端：可携带音频/视频/伴轨上行，

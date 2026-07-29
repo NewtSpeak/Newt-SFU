@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/auth"
 )
 
 // TestE2EStageBringUpBringDown 挂起接纳 → 抱上即发声 → 抱下即静默。

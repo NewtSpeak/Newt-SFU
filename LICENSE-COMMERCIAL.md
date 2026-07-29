@@ -1,6 +1,6 @@
-# Owl-SFU Commercial License Notice
+# Newt-SFU Commercial License Notice
 
-Copyright (c) 2026 OwlSpeak and contributors
+Copyright (c) 2026 NewtSpeak and contributors
 
 ## 商业使用说明（简体中文）
 
@@ -21,9 +21,9 @@ Copyright (c) 2026 OwlSpeak and contributors
 
 请通过以下方式联系版权方洽谈商业授权（定价、范围、期限、是否闭源等可协商）：
 
-- GitHub：https://github.com/OwlSpeak/Owl-SFU/issues  
+- GitHub：https://github.com/NewtSpeak/Newt-SFU/issues  
   （请创建 Issue，标题建议以 `[Commercial License]` 开头）
-- 或通过仓库所有者 / 组织 OwlSpeak 的公开联系渠道
+- 或通过仓库所有者 / 组织 NewtSpeak 的公开联系渠道
 
 商业许可通常可包含（以最终书面合同为准）：
 
@@ -48,8 +48,8 @@ The free grant is limited to noncommercial/personal use under `LICENSE` and
 commercial license obtained in writing from the copyright holder.
 
 Contact: open a GitHub Issue at  
-https://github.com/OwlSpeak/Owl-SFU/issues  
-with a title starting with `[Commercial License]`, or contact the OwlSpeak
+https://github.com/NewtSpeak/Newt-SFU/issues  
+with a title starting with `[Commercial License]`, or contact the NewtSpeak
 organization maintainers through their public channels.
 
 This file is a notice only; commercial rights are granted solely by a signed

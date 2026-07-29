@@ -28,7 +28,7 @@ import (
 	"github.com/pion/sdp/v3"
 	"github.com/pion/webrtc/v4"
 
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 type flags struct {
@@ -85,7 +85,7 @@ type counters struct {
 
 func main() {
 	var f flags
-	flag.StringVar(&f.serverURL, "server-url", "", "Owl-Server base URL (server mode), e.g. http://127.0.0.1:8080")
+	flag.StringVar(&f.serverURL, "server-url", "", "Newt-Server base URL (server mode), e.g. http://127.0.0.1:8080")
 	flag.StringVar(&f.username, "username", "", "server login username")
 	flag.StringVar(&f.password, "password", "", "server login password")
 	flag.StringVar(&f.email, "email", "", "signup email (default <username>@loadbot.test)")

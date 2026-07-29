@@ -9,8 +9,8 @@ package migrate
 import (
 	"log/slog"
 
-	"github.com/owlspeak/owl-sfu/internal/observability"
-	"github.com/owlspeak/owl-sfu/internal/room"
+	"github.com/newtspeak/newt-sfu/internal/observability"
+	"github.com/newtspeak/newt-sfu/internal/room"
 )
 
 // Handler 处理迁移相关指令。

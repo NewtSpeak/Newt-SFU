@@ -1,4 +1,4 @@
-module github.com/owlspeak/owl-sfu
+module github.com/newtspeak/newt-sfu
 
 go 1.26.0
 

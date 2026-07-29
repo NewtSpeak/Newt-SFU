@@ -4,5 +4,5 @@ package buildinfo
 // Version 节点程序版本号，Register / Heartbeat 上报给 Server。
 // 发布时建议：
 //
-//	go build -ldflags "-X github.com/owlspeak/owl-sfu/internal/buildinfo.Version=1.2.3"
+//	go build -ldflags "-X github.com/newtspeak/newt-sfu/internal/buildinfo.Version=1.2.3"
 var Version = "0.1.0-m1"

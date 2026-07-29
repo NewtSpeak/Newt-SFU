@@ -11,7 +11,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// CascadeTokenTyp typ claim 固定值（与 Owl-Server mediatoken.CascadeTokenTyp 对齐）。
+// CascadeTokenTyp typ claim 固定值（与 Newt-Server mediatoken.CascadeTokenTyp 对齐）。
 const CascadeTokenTyp = "cascade"
 
 // cascadeClaims 级联 token claims（docs 协议级联信令一节）。

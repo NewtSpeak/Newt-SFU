@@ -1,4 +1,4 @@
-// Server 模式（M4 热迁移 e2e）：经 Owl-Server 完成 登录 → voice/join → Gateway WS，
+// Server 模式（M4 热迁移 e2e）：经 Newt-Server 完成 登录 → voice/join → Gateway WS，
 // 处理 VOICE_MIGRATING / VOICE_SERVER_UPDATE 事件做双 PC 热切（docs 09 M.3）：
 // 收到新 endpoint+token 后新建第二个 PC，新 PC 就绪前旧 PC 继续收发；新 PC 连通即
 // CUTOVER（发送切到新 PC + 回 ack），新 PC 首包后拆旧 PC；打点静音窗口
@@ -25,7 +25,7 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 
-	owlsfu "github.com/owlspeak/owl-sfu/internal/sfu"
+	owlsfu "github.com/newtspeak/newt-sfu/internal/sfu"
 )
 
 // ---------------------------------------------------------------------------

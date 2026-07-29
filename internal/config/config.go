@@ -15,7 +15,7 @@ type Config struct {
 	// EnrollToken 为 Server 预创建节点占位时发放的一次性 token（仅首次接入需要）。
 	EnrollToken string `yaml:"enroll_token"`
 
-	// ServerEnrollEndpoint 为 Owl-Server gRPC 地址（Enroll 用；控制通道优先用
+	// ServerEnrollEndpoint 为 Newt-Server gRPC 地址（Enroll 用；控制通道优先用
 	// EnrollResponse 下发的 control_endpoint，缺省回落到此地址）。
 	ServerEnrollEndpoint string `yaml:"server_enroll_endpoint"`
 	// EnrollInsecure 为 true 时 Enroll 首次连接跳过 TLS 校验（仅 dev）；
@@ -54,7 +54,7 @@ type Config struct {
 	// AuditIngestURL 主节点录音上传地址（形如 https://server/audit-api/records）；
 	// 为空时审计录音仅落本地盘不上传。
 	AuditIngestURL string `yaml:"audit_ingest_url"`
-	// AuditIngestToken 与 Owl-Server AUDIT_INGEST_TOKEN 对齐的共享密钥。
+	// AuditIngestToken 与 Newt-Server AUDIT_INGEST_TOKEN 对齐的共享密钥。
 	AuditIngestToken string `yaml:"audit_ingest_token"`
 	// AuditKeepLocal 上传成功后是否保留本地录音（默认 false = 删除节省磁盘）。
 	AuditKeepLocal bool `yaml:"audit_keep_local"`

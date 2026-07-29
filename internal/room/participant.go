@@ -10,7 +10,7 @@ import (
 	"github.com/pion/rtp"
 	"github.com/pion/webrtc/v4"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/auth"
 )
 
 // SFU 主动关闭会话时 closed 帧使用的原因码。

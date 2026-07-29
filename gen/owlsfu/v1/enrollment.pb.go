@@ -294,7 +294,7 @@ const file_owlsfu_v1_enrollment_proto_rawDesc = "" +
 	"\x11EnrollmentService\x12=\n" +
 	"\x06Enroll\x12\x18.owlsfu.v1.EnrollRequest\x1a\x19.owlsfu.v1.EnrollResponse\x12[\n" +
 	"\x10RenewCertificate\x12\".owlsfu.v1.RenewCertificateRequest\x1a#.owlsfu.v1.RenewCertificateResponseB\x99\x01\n" +
-	"\rcom.owlsfu.v1B\x0fEnrollmentProtoP\x01Z2github.com/owlspeak/owl-sfu/gen/owlsfu/v1;owlsfuv1\xa2\x02\x03OXX\xaa\x02\tOwlsfu.V1\xca\x02\tOwlsfu\\V1\xe2\x02\x15Owlsfu\\V1\\GPBMetadata\xea\x02\n" +
+	"\rcom.owlsfu.v1B\x0fEnrollmentProtoP\x01Z2github.com/newtspeak/newt-sfu/gen/owlsfu/v1;owlsfuv1\xa2\x02\x03OXX\xaa\x02\tOwlsfu.V1\xca\x02\tOwlsfu\\V1\xe2\x02\x15Owlsfu\\V1\\GPBMetadata\xea\x02\n" +
 	"Owlsfu::V1b\x06proto3"
 
 var (

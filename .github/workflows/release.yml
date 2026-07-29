@@ -1,4 +1,4 @@
-# Owl-SFU 发布：多平台二进制 → 本仓 Release + 同步到 OwlSpeak/OwlSpeak
+# Newt-SFU 发布：多平台二进制 → 本仓 Release + 同步到 NewtSpeak/NewtSpeak
 name: Release
 
 on:
@@ -21,7 +21,7 @@ permissions:
 
 env:
   CGO_ENABLED: "0"
-  RELEASE_HUB_REPO: OwlSpeak/OwlSpeak
+  RELEASE_HUB_REPO: NewtSpeak/NewtSpeak
 
 jobs:
   resolve-version:
@@ -84,7 +84,7 @@ jobs:
           mkdir -p dist
           OUT="dist/owl-sfu-${VERSION}-${GOOS}-${GOARCH}"
           go build -trimpath \
-            -ldflags "-s -w -X github.com/owlspeak/owl-sfu/internal/buildinfo.Version=${VERSION}" \
+            -ldflags "-s -w -X github.com/newtspeak/newt-sfu/internal/buildinfo.Version=${VERSION}" \
             -o "${OUT}" ./cmd/owl-sfu
           sha256sum "${OUT}" | tee "${OUT}.sha256"
 
@@ -136,13 +136,13 @@ jobs:
           chmod +x scripts/ci/generate-release-notes.sh
           EXTRA=""
           if [ -f EXTRA_NOTES.md ]; then EXTRA=EXTRA_NOTES.md; fi
-          scripts/ci/generate-release-notes.sh "Owl-SFU" "$EXTRA" | tee RELEASE_BODY.md
+          scripts/ci/generate-release-notes.sh "Newt-SFU" "$EXTRA" | tee RELEASE_BODY.md
 
       - name: Create own-repo Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.resolve-version.outputs.tag }}
-          name: Owl-SFU ${{ needs.resolve-version.outputs.tag }}
+          name: Newt-SFU ${{ needs.resolve-version.outputs.tag }}
           body_path: RELEASE_BODY.md
           files: |
             release-assets/owl-sfu-*
@@ -152,13 +152,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Sync to OwlSpeak/OwlSpeak hub
+      - name: Sync to NewtSpeak/NewtSpeak hub
         env:
           RELEASE_HUB_TOKEN: ${{ secrets.RELEASE_HUB_TOKEN }}
           RELEASE_HUB_REPO: ${{ env.RELEASE_HUB_REPO }}
           TAG: ${{ needs.resolve-version.outputs.tag }}
-          COMPONENT_KEY: Owl-SFU
-          COMPONENT_TITLE: Owl-SFU（媒体面）
+          COMPONENT_KEY: Newt-SFU
+          COMPONENT_TITLE: Newt-SFU（媒体面）
           RELEASE_BODY_PATH: RELEASE_BODY.md
           ASSET_GLOBS: "release-assets/owl-sfu-* release-assets/SHA256SUMS-owl-sfu-*"
         run: |

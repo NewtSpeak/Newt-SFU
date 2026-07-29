@@ -1,8 +1,8 @@
-# Owl-SFU 本地构建辅助（与 CI/Release 命名约定保持一致）
+# Newt-SFU 本地构建辅助（与 CI/Release 命名约定保持一致）
 .PHONY: test vet build build-all clean
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
-LDFLAGS = -s -w -X github.com/owlspeak/owl-sfu/internal/buildinfo.Version=$(VERSION)
+LDFLAGS = -s -w -X github.com/newtspeak/newt-sfu/internal/buildinfo.Version=$(VERSION)
 CGO_ENABLED ?= 0
 export CGO_ENABLED
 

@@ -1,11 +1,11 @@
-# Owl-SFU 配置示例（复制为 config.yaml；全部字段可用 OWLSFU_ 前缀环境变量覆盖，
+# Newt-SFU 配置示例（复制为 config.yaml；全部字段可用 OWLSFU_ 前缀环境变量覆盖，
 # 如 OWLSFU_NODE_ID / OWLSFU_NO_TLS）
 
 # 节点身份：Server 预创建占位的 node_id + 一次性 enroll token（仅首次接入需要）
 node_id: "sfu-node-1"
 enroll_token: ""
 
-# Owl-Server gRPC 地址（Enroll 用；控制通道优先用 Enroll 下发的 control_endpoint）
+# Newt-Server gRPC 地址（Enroll 用；控制通道优先用 Enroll 下发的 control_endpoint）
 server_enroll_endpoint: "127.0.0.1:9443"
 # dev 专用：Enroll 首次连接跳过 TLS 校验；拿到 ca_bundle 后控制通道始终严格校验
 enroll_insecure: false
@@ -45,5 +45,5 @@ drain_timeout_sec: 60
 # 落 data_dir/audit 后上传主节点服务器（POST audit_ingest_url，Bearer audit_ingest_token）。
 # 留空时采用 RegisterAck 主节点下发的配置（开发零配置）；显式填写则覆盖下发值。
 audit_ingest_url: ""       # 如 https://chat.example.com/audit-api/records
-audit_ingest_token: ""     # 与 Owl-Server AUDIT_INGEST_TOKEN 相同的共享密钥
+audit_ingest_token: ""     # 与 Newt-Server AUDIT_INGEST_TOKEN 相同的共享密钥
 audit_keep_local: false    # 上传成功后是否保留本地录音（默认删除节省磁盘）

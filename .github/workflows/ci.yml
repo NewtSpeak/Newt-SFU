@@ -1,4 +1,4 @@
-# Owl-SFU 持续集成：单元/e2e 测试 + 多平台编译冒烟
+# Newt-SFU 持续集成：单元/e2e 测试 + 多平台编译冒烟
 name: CI
 
 on:
@@ -80,7 +80,7 @@ jobs:
           mkdir -p dist
           OUT="dist/owl-sfu-${VERSION}-${GOOS}-${GOARCH}"
           go build -trimpath \
-            -ldflags "-s -w -X github.com/owlspeak/owl-sfu/internal/buildinfo.Version=${VERSION}" \
+            -ldflags "-s -w -X github.com/newtspeak/newt-sfu/internal/buildinfo.Version=${VERSION}" \
             -o "${OUT}" ./cmd/owl-sfu
           ls -lh "${OUT}"
 

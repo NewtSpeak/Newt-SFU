@@ -3,7 +3,7 @@ package room
 import (
 	"testing"
 
-	"github.com/owlspeak/owl-sfu/internal/auth"
+	"github.com/newtspeak/newt-sfu/internal/auth"
 )
 
 // TestTrackKeyRoundtrip 轨 id 约定编解码往返（客户端下行与级联共用）。
