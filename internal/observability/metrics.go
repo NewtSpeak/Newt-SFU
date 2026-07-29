@@ -6,7 +6,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/collectors"
 )
 
-// Metrics 汇总 owl-sfu 全部 Prometheus 指标。
+// Metrics 汇总 newt-sfu 全部 Prometheus 指标。
 type Metrics struct {
 	Registry *prometheus.Registry
 

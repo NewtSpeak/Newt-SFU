@@ -1,4 +1,4 @@
-// owl-sfu 主入口：配置 → enrollment → metrics/signal/UDPMux → 控制通道 → 优雅退出。
+// newt-sfu 主入口：配置 → enrollment → metrics/signal/UDPMux → 控制通道 → 优雅退出。
 package main
 
 import (

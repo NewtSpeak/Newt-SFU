@@ -9,7 +9,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Config 为 owl-sfu 全量配置。
+// Config 为 newt-sfu 全量配置。
 type Config struct {
 	NodeID string `yaml:"node_id"`
 	// EnrollToken 为 Server 预创建节点占位时发放的一次性 token（仅首次接入需要）。

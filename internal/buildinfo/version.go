@@ -1,4 +1,4 @@
-// Package buildinfo 暴露 owl-sfu 运行时版本（可由 -ldflags 注入）。
+// Package buildinfo 暴露 newt-sfu 运行时版本（可由 -ldflags 注入）。
 package buildinfo
 
 // Version 节点程序版本号，Register / Heartbeat 上报给 Server。

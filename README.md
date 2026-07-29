@@ -4,9 +4,9 @@ NewtSpeak **媒体面**节点：基于 Go + [Pion](https://github.com/pion/webrt
 只做 **选路转发**（不转码、不混流）；业务权限与调度权威在 [Newt-Server](https://github.com/NewtSpeak/Newt-Server)。
 
 ```text
-Desktop ──WSS 信令──► owl-sfu :8443（常经 Caddy 终结 TLS）
-Desktop ──UDP 媒体──► owl-sfu :3478（直连，不经 Server）
-owl-sfu ──mTLS gRPC──► Server :9443（主动外连，管理面不反向暴露）
+Desktop ──WSS 信令──► newt-sfu :8443（常经 Caddy 终结 TLS）
+Desktop ──UDP 媒体──► newt-sfu :3478（直连，不经 Server）
+newt-sfu ──mTLS gRPC──► Server :9443（主动外连，管理面不反向暴露）
 ```
 
 ## 功能
@@ -27,7 +27,7 @@ owl-sfu ──mTLS gRPC──► Server :9443（主动外连，管理面不反�
 
 ```text
 Newt-SFU/
-├── cmd/owl-sfu/       # 主进程
+├── cmd/newt-sfu/       # 主进程
 ├── cmd/loadbot/       # headless Pion 联调 / 压测客户端
 ├── internal/
 │   ├── enroll/        # 领证与续期
@@ -64,7 +64,7 @@ make build
 ./bin/newt-sfu --config config.yaml
 
 # 交叉编译 linux/amd64
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o bin/newt-sfu ./cmd/owl-sfu
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o bin/newt-sfu ./cmd/newt-sfu
 ```
 
 **首次上线：**

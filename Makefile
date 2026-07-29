@@ -15,7 +15,7 @@ vet:
 # 本机平台
 build:
 	mkdir -p bin
-	go build -trimpath -ldflags "$(LDFLAGS)" -o bin/newt-sfu ./cmd/owl-sfu
+	go build -trimpath -ldflags "$(LDFLAGS)" -o bin/newt-sfu ./cmd/newt-sfu
 	@echo "built bin/newt-sfu (version=$(VERSION))"
 
 # 与 Server 发布目录兼容的多平台工件
@@ -23,11 +23,11 @@ build-all:
 	mkdir -p dist
 	@for pair in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do \
 		GOOS=$${pair%/*}; GOARCH=$${pair#*/}; \
-		OUT=dist/owl-sfu-$(VERSION)-$$GOOS-$$GOARCH; \
+		OUT=dist/newt-sfu-$(VERSION)-$$GOOS-$$GOARCH; \
 		echo "→ $$OUT"; \
-		GOOS=$$GOOS GOARCH=$$GOARCH go build -trimpath -ldflags "$(LDFLAGS)" -o "$$OUT" ./cmd/owl-sfu; \
+		GOOS=$$GOOS GOARCH=$$GOARCH go build -trimpath -ldflags "$(LDFLAGS)" -o "$$OUT" ./cmd/newt-sfu; \
 	done
-	cd dist && sha256sum owl-sfu-* > SHA256SUMS
+	cd dist && sha256sum newt-sfu-* > SHA256SUMS
 	@ls -lh dist/
 
 clean:

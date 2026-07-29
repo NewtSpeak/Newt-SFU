@@ -82,15 +82,15 @@ jobs:
           VERSION: ${{ needs.resolve-version.outputs.version }}
         run: |
           mkdir -p dist
-          OUT="dist/owl-sfu-${VERSION}-${GOOS}-${GOARCH}"
+          OUT="dist/newt-sfu-${VERSION}-${GOOS}-${GOARCH}"
           go build -trimpath \
             -ldflags "-s -w -X github.com/newtspeak/newt-sfu/internal/buildinfo.Version=${VERSION}" \
-            -o "${OUT}" ./cmd/owl-sfu
+            -o "${OUT}" ./cmd/newt-sfu
           sha256sum "${OUT}" | tee "${OUT}.sha256"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: owl-sfu-${{ needs.resolve-version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: newt-sfu-${{ needs.resolve-version.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/*
           if-no-files-found: error
           retention-days: 14
@@ -108,7 +108,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           path: release-assets
-          pattern: owl-sfu-*
+          pattern: newt-sfu-*
           merge-multiple: true
 
       - name: Prepare checksums
@@ -117,10 +117,10 @@ jobs:
           ls -lah
           {
             if ls *.sha256 >/dev/null 2>&1; then cat *.sha256
-            else sha256sum owl-sfu-*
+            else sha256sum newt-sfu-*
             fi
-          } > "SHA256SUMS-owl-sfu-${{ needs.resolve-version.outputs.version }}.txt"
-          cat "SHA256SUMS-owl-sfu-${{ needs.resolve-version.outputs.version }}.txt"
+          } > "SHA256SUMS-newt-sfu-${{ needs.resolve-version.outputs.version }}.txt"
+          cat "SHA256SUMS-newt-sfu-${{ needs.resolve-version.outputs.version }}.txt"
 
       - name: Write extra notes
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.extra_notes != '' }}
@@ -145,8 +145,8 @@ jobs:
           name: Newt-SFU ${{ needs.resolve-version.outputs.tag }}
           body_path: RELEASE_BODY.md
           files: |
-            release-assets/owl-sfu-*
-            release-assets/SHA256SUMS-owl-sfu-*
+            release-assets/newt-sfu-*
+            release-assets/SHA256SUMS-newt-sfu-*
           fail_on_unmatched_files: true
           make_latest: true
         env:
@@ -160,7 +160,7 @@ jobs:
           COMPONENT_KEY: Newt-SFU
           COMPONENT_TITLE: Newt-SFU（媒体面）
           RELEASE_BODY_PATH: RELEASE_BODY.md
-          ASSET_GLOBS: "release-assets/owl-sfu-* release-assets/SHA256SUMS-owl-sfu-*"
+          ASSET_GLOBS: "release-assets/newt-sfu-* release-assets/SHA256SUMS-newt-sfu-*"
         run: |
           chmod +x scripts/ci/sync-release-hub.sh
           scripts/ci/sync-release-hub.sh

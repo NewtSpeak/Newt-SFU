@@ -71,17 +71,17 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Build owl-sfu
+      - name: Build newt-sfu
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
         run: |
           VERSION="ci-${GITHUB_SHA::7}"
           mkdir -p dist
-          OUT="dist/owl-sfu-${VERSION}-${GOOS}-${GOARCH}"
+          OUT="dist/newt-sfu-${VERSION}-${GOOS}-${GOARCH}"
           go build -trimpath \
             -ldflags "-s -w -X github.com/newtspeak/newt-sfu/internal/buildinfo.Version=${VERSION}" \
-            -o "${OUT}" ./cmd/owl-sfu
+            -o "${OUT}" ./cmd/newt-sfu
           ls -lh "${OUT}"
 
       - name: Build loadbot (linux/amd64 only)
