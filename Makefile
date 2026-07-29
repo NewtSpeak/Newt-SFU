@@ -15,8 +15,8 @@ vet:
 # 本机平台
 build:
 	mkdir -p bin
-	go build -trimpath -ldflags "$(LDFLAGS)" -o bin/owl-sfu ./cmd/owl-sfu
-	@echo "built bin/owl-sfu (version=$(VERSION))"
+	go build -trimpath -ldflags "$(LDFLAGS)" -o bin/newt-sfu ./cmd/owl-sfu
+	@echo "built bin/newt-sfu (version=$(VERSION))"
 
 # 与 Server 发布目录兼容的多平台工件
 build-all:

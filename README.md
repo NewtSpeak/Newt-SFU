@@ -57,20 +57,20 @@ Newt-SFU/
 
 ```bash
 cp config.example.yaml config.yaml
-# 或全部用 OWLSFU_ 环境变量（见 config.example.yaml 注释）
+# 或全部用 NEWTSFU_ 环境变量（见 config.example.yaml 注释）
 
 # 本机构建
 make build
-./bin/owl-sfu --config config.yaml
+./bin/newt-sfu --config config.yaml
 
 # 交叉编译 linux/amd64
-CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o bin/owl-sfu ./cmd/owl-sfu
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -trimpath -ldflags="-s -w" -o bin/newt-sfu ./cmd/owl-sfu
 ```
 
 **首次上线：**
 
 1. Server 面板「节点管理」创建占位 → 取得 `node_id` + 一次性 `enroll_token`  
-2. 配置 `OWLSFU_SERVER_ENROLL_ENDPOINT`、`OWLSFU_PUBLIC_IP`、`OWLSFU_ADVERTISE_WSS_URL`  
+2. 配置 `NEWTSFU_SERVER_ENROLL_ENDPOINT`、`NEWTSFU_PUBLIC_IP`、`NEWTSFU_ADVERTISE_WSS_URL`  
 3. 启动后证书落盘 `DATA_DIR`；之后可清空 enroll token  
 
 生产推荐：本机 listen + Caddy 终结 WSS；媒体 UDP 直通。详见部署文档。

@@ -153,7 +153,7 @@ func run(configPath string, log *slog.Logger) error {
 		if url == "" || token == "" {
 			mgr.SetAudit(cfg.NodeID, auditDir, nil)
 			if source == "local_config" {
-				log.Info("audit ingest waiting for RegisterAck (or set OWLSFU_AUDIT_INGEST_*)")
+				log.Info("audit ingest waiting for RegisterAck (or set NEWTSFU_AUDIT_INGEST_*)")
 			}
 			return
 		}

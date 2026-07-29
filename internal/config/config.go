@@ -1,4 +1,4 @@
-// Package config 加载 YAML 配置并支持环境变量覆盖（OWLSFU_ 前缀）。
+// Package config 加载 YAML 配置并支持环境变量覆盖（NEWTSFU_ 前缀）。
 package config
 
 import (
@@ -108,25 +108,25 @@ func (c *Config) validate() error {
 }
 
 func applyEnv(c *Config) {
-	envStr("OWLSFU_NODE_ID", &c.NodeID)
-	envStr("OWLSFU_ENROLL_TOKEN", &c.EnrollToken)
-	envStr("OWLSFU_SERVER_ENROLL_ENDPOINT", &c.ServerEnrollEndpoint)
-	envBool("OWLSFU_ENROLL_INSECURE", &c.EnrollInsecure)
-	envStr("OWLSFU_DATA_DIR", &c.DataDir)
-	envStr("OWLSFU_WSS_LISTEN", &c.WSSListen)
-	envBool("OWLSFU_NO_TLS", &c.NoTLS)
-	envStr("OWLSFU_TLS_CERT_FILE", &c.TLSCertFile)
-	envStr("OWLSFU_TLS_KEY_FILE", &c.TLSKeyFile)
-	envInt("OWLSFU_MEDIA_UDP_PORT", &c.MediaUDPPort)
-	envStr("OWLSFU_PUBLIC_IP", &c.PublicIP)
-	envStr("OWLSFU_ADVERTISE_WSS_URL", &c.AdvertiseWSSURL)
-	envInt("OWLSFU_MAX_USERS", &c.MaxUsers)
-	envStr("OWLSFU_CASCADE_LISTEN", &c.CascadeListen)
-	envStr("OWLSFU_ADVERTISE_CASCADE_ENDPOINT", &c.AdvertiseCascadeEndpoint)
-	envInt("OWLSFU_DRAIN_TIMEOUT_SEC", &c.DrainTimeoutSec)
-	envStr("OWLSFU_AUDIT_INGEST_URL", &c.AuditIngestURL)
-	envStr("OWLSFU_AUDIT_INGEST_TOKEN", &c.AuditIngestToken)
-	envBool("OWLSFU_AUDIT_KEEP_LOCAL", &c.AuditKeepLocal)
+	envStr("NEWTSFU_NODE_ID", &c.NodeID)
+	envStr("NEWTSFU_ENROLL_TOKEN", &c.EnrollToken)
+	envStr("NEWTSFU_SERVER_ENROLL_ENDPOINT", &c.ServerEnrollEndpoint)
+	envBool("NEWTSFU_ENROLL_INSECURE", &c.EnrollInsecure)
+	envStr("NEWTSFU_DATA_DIR", &c.DataDir)
+	envStr("NEWTSFU_WSS_LISTEN", &c.WSSListen)
+	envBool("NEWTSFU_NO_TLS", &c.NoTLS)
+	envStr("NEWTSFU_TLS_CERT_FILE", &c.TLSCertFile)
+	envStr("NEWTSFU_TLS_KEY_FILE", &c.TLSKeyFile)
+	envInt("NEWTSFU_MEDIA_UDP_PORT", &c.MediaUDPPort)
+	envStr("NEWTSFU_PUBLIC_IP", &c.PublicIP)
+	envStr("NEWTSFU_ADVERTISE_WSS_URL", &c.AdvertiseWSSURL)
+	envInt("NEWTSFU_MAX_USERS", &c.MaxUsers)
+	envStr("NEWTSFU_CASCADE_LISTEN", &c.CascadeListen)
+	envStr("NEWTSFU_ADVERTISE_CASCADE_ENDPOINT", &c.AdvertiseCascadeEndpoint)
+	envInt("NEWTSFU_DRAIN_TIMEOUT_SEC", &c.DrainTimeoutSec)
+	envStr("NEWTSFU_AUDIT_INGEST_URL", &c.AuditIngestURL)
+	envStr("NEWTSFU_AUDIT_INGEST_TOKEN", &c.AuditIngestToken)
+	envBool("NEWTSFU_AUDIT_KEEP_LOCAL", &c.AuditKeepLocal)
 }
 
 func envStr(key string, dst *string) {

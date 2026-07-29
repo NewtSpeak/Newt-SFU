@@ -1,5 +1,5 @@
-# Newt-SFU 配置示例（复制为 config.yaml；全部字段可用 OWLSFU_ 前缀环境变量覆盖，
-# 如 OWLSFU_NODE_ID / OWLSFU_NO_TLS）
+# Newt-SFU 配置示例（复制为 config.yaml；全部字段可用 NEWTSFU_ 前缀环境变量覆盖，
+# 如 NEWTSFU_NODE_ID / NEWTSFU_NO_TLS）
 
 # 节点身份：Server 预创建占位的 node_id + 一次性 enroll token（仅首次接入需要）
 node_id: "sfu-node-1"
